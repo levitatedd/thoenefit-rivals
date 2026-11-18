@@ -10,6 +10,10 @@ export const Colors = {
     energy: '#E5484D',
     warningBackground: '#FFF4D5',
     warningText: '#6B4E00',
+    accentText: '#067A50',
+    accentSurface: '#E3FCF2',
+    onAccent: '#0B0B0D',
+    danger: '#C62A2F',
   },
   dark: {
     text: '#ECEDEE',
@@ -22,6 +26,10 @@ export const Colors = {
     energy: '#FF6369',
     warningBackground: '#3A2E05',
     warningText: '#FFE08A',
+    accentText: '#2DF5A2',
+    accentSurface: '#13261E',
+    onAccent: '#0B0B0D',
+    danger: '#FF6369',
   },
 } as const;
 

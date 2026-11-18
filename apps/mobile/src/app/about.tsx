@@ -32,8 +32,8 @@ export default function AboutScreen() {
 
         <ThemedText type="small" themeColor="textSecondary">
           This preview does not request health permissions and does not read from Apple Health,
-          Health Connect, or any wearable. Competitions, scoring, and leaderboards are not built
-          yet.
+          Health Connect, or any wearable. The competitions, friends and leaderboards are a
+          simulated demo scored with the real scoring rules. Nothing is saved or shared.
         </ThemedText>
       </View>
     </ScrollView>

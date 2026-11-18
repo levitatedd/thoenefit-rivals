@@ -150,6 +150,6 @@ const leaderboard = toPublicStandings(result); // safe to show to other particip
   competition time zone, and set `activityId` / `aggregation` only from real platform metadata.
 - Resolving held records (`OVERLAP_UNRESOLVED`, `SPANS_DAY_BOUNDARY`, `UNKNOWN_SOURCE`) with better
   provenance from the adapters, or a review flow: follow-up with #6.
-- Leaderboard and competition screens: #3.
+- Leaderboard and competition screens: #3 (simulated demo; Demo Scoring Settings affect demo competitions only).
 - Persistence, accounts, and any server-side verification: #7, #8; anti-cheating policy: #10.
 - Simulated validation of the rules: #14 → [SCORING-VALIDATION.md](SCORING-VALIDATION.md). Real-world playtesting comes later.
