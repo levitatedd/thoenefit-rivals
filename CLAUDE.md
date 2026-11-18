@@ -17,6 +17,7 @@
 - When beginning work, move its entry from Next/Planned to In Progress in #1.
 - When verified and merged, close the implementation issue and move its entry to Completed in #1, retaining its issue link.
 - Keep the GitHub Projects board synchronized if one has been configured. Do not claim board changes unless verified.
+- Board automation (see docs/DEVELOPMENT.md): add the `status: in progress` label when starting an issue; link issues in PR descriptions (`Closes #N` / `Refs #N`) so CI can move them to In Review and merges can close them. Confirm results in the workflow run's "Project board status" summary before claiming a board change.
 - All resolved issues and future work should remain discoverable through GitHub Issues.
 
 ## Branch and review policy

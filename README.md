@@ -31,6 +31,8 @@ Scan the QR code with Expo Go on your phone. Full steps: [docs/DEVELOPMENT.md](d
 - [Windows development](docs/DEVELOPMENT.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Dependency audit](docs/DEPENDENCY-AUDIT.md)
+- [Contributing](CONTRIBUTING.md) — issues, branches, PRs, board statuses
+- [Releasing](docs/RELEASING.md) — `staging` → `main` checklist
 - [Master backlog — Issue #1](https://github.com/levitatedd/thoenefit-rivals/issues/1)
 - [GitHub Projects board](https://github.com/users/levitatedd/projects/4/views/1)
 - [GitHub Issues](../../issues)
@@ -40,8 +42,9 @@ Scan the QR code with Expo Go on your phone. Full steps: [docs/DEVELOPMENT.md](d
 - `main`: stable reviewed releases.
 - `staging`: integration and testing.
 - `feature/<issue>-short-name`: feature branches targeting `staging`.
-- Promote tested work from `staging` to `main` via pull request.
-- Track future fixes and resolved work in GitHub Issues.
+- Every PR runs CI (typecheck, lint, format, tests, bundle build, dependency audit) on Linux and Windows.
+- Promote tested work from `staging` to `main` via pull request ([checklist](docs/RELEASING.md)).
+- Track future fixes and resolved work in GitHub Issues. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Privacy and licensing
 
