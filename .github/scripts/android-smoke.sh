@@ -11,17 +11,45 @@ mkdir -p "$OUT"
 echo "APK: $APK"
 echo "Package: $PACKAGE"
 
+APP_LABEL="ThoeneFit Rivals"
+
 adb wait-for-device
+# Software-rendered CI emulators are slow right after boot, and system apps (e.g. Pixel
+# Launcher) can raise "isn't responding" dialogs that cover our app. Let the system settle
+# and suppress system error dialogs; any that still appear are handled in the loop below.
+adb shell settings put global hide_error_dialogs 1 >/dev/null 2>&1 || true
+sleep 20
 adb install -r "$APK"
 adb logcat -c
 adb shell monkey -p "$PACKAGE" -c android.intent.category.LAUNCHER 1
 
+# Taps a button in the current UI dump by its exact text. Returns non-zero if not found.
+tap_button() {
+  local bounds
+  bounds=$(grep -oE "text=\"$1\"[^>]*bounds=\"\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]\"" "$OUT/ui.xml" | head -1 \
+    | grep -oE '\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]') || return 1
+  read -r x1 y1 x2 y2 <<< "$(echo "$bounds" | sed -E 's/\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\]/\1 \2 \3 \4/')"
+  adb shell input tap $(((x1 + x2) / 2)) $(((y1 + y2) / 2))
+}
+
 found=0
 last_dump_msg=""
+system_dialogs=0
 for attempt in $(seq 1 40); do
   sleep 3
   last_dump_msg=$(adb shell uiautomator dump /sdcard/ui.xml 2>&1 | tr -d '\r') || true
   adb exec-out cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null || continue
+  if grep -qE "isn.t responding|keeps stopping|has stopped" "$OUT/ui.xml"; then
+    dialog=$(grep -oE 'text="[^"]*(isn.t responding|keeps stopping|has stopped)[^"]*"' "$OUT/ui.xml" | head -1)
+    if echo "$dialog" | grep -q "$APP_LABEL"; then
+      echo "::error::Our app raised a system error dialog: $dialog"
+      break
+    fi
+    system_dialogs=$((system_dialogs + 1))
+    echo "Dismissing unrelated system dialog ($dialog)"
+    tap_button "Wait" || adb shell input keyevent KEYCODE_BACK
+    continue
+  fi
   if grep -q 'Simulated data' "$OUT/ui.xml" && grep -q 'text="Today"' "$OUT/ui.xml"; then
     found=1
     echo "Dashboard visible after ~$((attempt * 3))s"
@@ -73,3 +101,6 @@ if ! grep -qE 'content-desc="Active energy: [0-9,]+ kcal"' "$OUT/ui.xml"; then
 fi
 
 echo "✅ Android smoke test passed: app launched, simulated dashboard with steps and active energy is visible."
+if [ "$system_dialogs" -gt 0 ]; then
+  echo "::notice::Dismissed $system_dialogs unrelated system 'isn't responding' dialog(s) from the emulator (not this app)."
+fi
