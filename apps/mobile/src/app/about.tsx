@@ -10,11 +10,14 @@ export default function AboutScreen() {
   const theme = useTheme();
   const source = useActivitySource();
   const version = Constants.expoConfig?.version ?? 'unknown';
+  const build = Constants.expoConfig?.extra?.buildNumber ?? '?';
+  const variant = Constants.expoConfig?.extra?.variant ?? 'development';
 
   return (
     <ScrollView
       style={{ backgroundColor: theme.background }}
-      contentContainerStyle={styles.scrollContent}>
+      contentContainerStyle={styles.scrollContent}
+      contentInsetAdjustmentBehavior="automatic">
       <View style={styles.column}>
         <ThemedText type="subtitle">ThoeneFit Rivals</ThemedText>
         <ThemedText themeColor="textSecondary">
@@ -22,15 +25,16 @@ export default function AboutScreen() {
         </ThemedText>
 
         <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
-          <Row label="Version" value={version} />
+          <Row label="Version" value={`${version} (build ${build})`} />
+          <Row label="Channel" value={String(variant)} />
           <Row label="Data source" value={source.info.label} />
           <Row label="Stage" value="Pre-alpha preview" />
         </View>
 
         <ThemedText type="small" themeColor="textSecondary">
           This preview does not request health permissions and does not read from Apple Health,
-          Health Connect, or any wearable. Competitions, scoring, and leaderboards are not built
-          yet.
+          Health Connect, or any wearable. The competitions, friends and leaderboards are a
+          simulated demo scored with the real scoring rules. Nothing is saved or shared.
         </ThemedText>
       </View>
     </ScrollView>

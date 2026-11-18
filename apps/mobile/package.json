@@ -1,6 +1,6 @@
 {
   "name": "thoenefit-rivals-mobile",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "main": "expo-router/entry",
   "engines": {
@@ -17,7 +17,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "doctor": "npx expo-doctor@latest",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm test -- --ci"
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test -- --ci",
+    "simulate:report": "node scripts/simulate-report.js"
   },
   "dependencies": {
     "expo": "58.0.26",

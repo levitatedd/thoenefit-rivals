@@ -30,15 +30,20 @@ Add native-compatible packages with `npx expo install <package>` so versions mat
 ```
 src/
   app/                 Expo Router screens (every file is a route)
-    _layout.tsx        Root stack, theme, and activity data provider
-    index.tsx          "Today" dashboard (steps + active energy, last 7 days)
+    _layout.tsx        Root stack, theme, activity + demo providers; modals anchored on the tabs
+    (tabs)/            Bottom tabs: index.tsx (Today) and competitions.tsx
+    competition/[id]/  Leaderboard (index.tsx) and a player's day-by-day ([participantId].tsx)
+    scoring.tsx        "How scoring works" (modal)
+    demo.tsx           Demo controls + Demo Scoring Settings (modal, demo only)
     about.tsx          About / data-source info
+  features/demo/       Simulated demo world (#3): players, state/reducer, labels, and
+                       buildDemoWorld(), which scores two demo competitions with the real engine
+  features/scoring/    Scoring engine (#2) and seeded simulations (#14)
   features/activity/   Health-data boundary
     types.ts           Normalized DailyActivitySummary + ActivityDataSource adapter interface
     simulated-source.ts  Deterministic simulated adapter (the only adapter today)
     activity-source-context.tsx  Provides the active adapter to screens
-    use-recent-activity.ts       Loads recent summaries for the UI
-  components/          Shared UI
+  components/          Shared UI (demo-ui.tsx: cards, day bars, steppers; tab-icons.tsx)
   constants/theme.ts   Colors (light/dark) and spacing
   utils/               Formatting helpers
 ```

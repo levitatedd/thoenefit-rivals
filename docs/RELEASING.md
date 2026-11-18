@@ -13,8 +13,15 @@
    [docs/DEPENDENCY-AUDIT.md](DEPENDENCY-AUDIT.md) or a security issue.
 5. README and docs match what is on `staging`.
 6. No secrets, signing files, or real health data in the diff (`git diff main...staging --stat`).
-7. Open a PR from `staging` into `main` with the release summary below as its description.
-8. The owner reviews and merges. Use **Create a merge commit** so the release is easy to revert.
+7. Prepare the version and changelog: on a `chore/release-x.y.z` branch from `staging`, run
+   `node .github/scripts/release/cli.js prepare --base origin/main --head origin/staging`, review
+   the generated `CHANGELOG.md` entry, and merge that PR into `staging`. (Chore-only releases need
+   no bump; the command says so.)
+8. Open a PR from `staging` into `main` with the release summary below as its description. Paste
+   the generated user-facing notes under **User-visible changes**. The **Release notes** check must
+   pass.
+9. The owner approves; merge with **Create a merge commit** (required: it marks the release
+   boundary for the next changelog, and makes the release easy to revert).
 
 ## Release summary template
 

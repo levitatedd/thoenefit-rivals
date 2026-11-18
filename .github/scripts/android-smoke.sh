@@ -89,18 +89,42 @@ if [ "$found" -ne 1 ]; then
   exit 1
 fi
 
-if ! grep -qE 'content-desc="Steps: [0-9,]+ steps"' "$OUT/ui.xml"; then
+# Goal cards (#3): "Steps: 7,420 of 8,500 steps goal" / "Active energy: 310 of 450 kcal goal".
+if ! grep -qE 'content-desc="Steps: [0-9,]+ of [0-9,]+ steps goal"' "$OUT/ui.xml"; then
   echo "::error::Dashboard rendered but the Steps metric is missing."
   diagnose
   exit 1
 fi
-if ! grep -qE 'content-desc="Active energy: [0-9,]+ kcal"' "$OUT/ui.xml"; then
+if ! grep -qE 'content-desc="Active energy: [0-9,]+ of [0-9,]+ kcal goal"' "$OUT/ui.xml"; then
   echo "::error::Dashboard rendered but the Active energy metric is missing."
   diagnose
   exit 1
 fi
 
-echo "✅ Android smoke test passed: app launched, simulated dashboard with steps and active energy is visible."
+# Navigation (#3): open the Competitions tab and check the demo competitions list renders.
+if ! tap_button "Competitions"; then
+  echo "::error::The Competitions tab button was not found on the Today screen."
+  diagnose
+  exit 1
+fi
+competitions=0
+for attempt in $(seq 1 10); do
+  sleep 2
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true
+  adb exec-out cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null || continue
+  if grep -q 'text="ACTIVE"' "$OUT/ui.xml" && grep -q 'text="Step Battle"' "$OUT/ui.xml"; then
+    competitions=1
+    break
+  fi
+done
+adb exec-out screencap -p > "$OUT/android-competitions.png" || true
+if [ "$competitions" -ne 1 ]; then
+  echo "::error::The Competitions tab did not show the demo Step Battle."
+  diagnose
+  exit 1
+fi
+
+echo "✅ Android smoke test passed: app launched, simulated dashboard with step and calorie goals is visible, and the Competitions tab shows the demo Step Battle."
 if [ "$system_dialogs" -gt 0 ]; then
   echo "::notice::Dismissed $system_dialogs unrelated system 'isn't responding' dialog(s) from the emulator (not this app)."
 fi

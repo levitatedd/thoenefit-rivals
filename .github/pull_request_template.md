@@ -1,5 +1,7 @@
 <!--
-Target `staging` for feature work. Promotions from `staging` to `main` use docs/RELEASING.md instead.
+Target `staging`. Branch prefix sets the release-notes category: feature/ = New, improve/ = Improved,
+fix/ = Fixed, chore/ = not shown to users. The PR title is the user-facing release-note line.
+Promotions from `staging` to `main` use docs/RELEASING.md instead.
 -->
 
 ## Linked issue
