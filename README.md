@@ -4,7 +4,7 @@
 
 A planned cross-platform fitness competition app for iPhone and Android. Compete with friends across supported wearables using customizable challenges and personalized activity goals.
 
-> **Status:** Planning / pre-alpha. No native health integrations or watch apps are implemented yet.
+> **Status:** Pre-alpha. An Expo / React Native app shell with **simulated** activity data lives in [`apps/mobile`](apps/mobile). No native health integrations or watch apps are implemented yet.
 
 ## Vision
 
@@ -12,6 +12,18 @@ A planned cross-platform fitness competition app for iPhone and Android. Compete
 - Start with active calories and steps; keep scoring configurable.
 - Support goal percentages, weighted metrics, and competition-specific rules.
 - Private challenges, leaderboards, trophies, and bragging rights.
+
+## Quick start (Windows 11)
+
+Install Git and Node.js LTS, then:
+
+```powershell
+cd apps\mobile
+npm ci
+npm start
+```
+
+Scan the QR code with Expo Go on your phone. Full steps: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Documentation
 

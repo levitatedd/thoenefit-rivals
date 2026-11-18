@@ -1,8 +1,9 @@
-# Architecture (proposed, not yet implemented)
+# Architecture (proposed; mobile shell implemented)
 
 ## Stack
 
-- Mobile: Expo / React Native with TypeScript, using development builds for native integrations.
+- Mobile: Expo SDK 58 / React Native 0.88 with TypeScript and Expo Router in `apps/mobile` (implemented, #15). Development builds will be needed for native integrations.
+- Health-data boundary: adapters implement `ActivityDataSource` and emit normalized `DailyActivitySummary` records (`apps/mobile/src/features/activity`). Only a simulated adapter exists today.
 - Scoring: pure TypeScript package with deterministic unit tests and versioned competition rules.
 - Backend: Supabase is the initial candidate for authentication, PostgreSQL, and access control; evaluate before committing.
 - iOS: HealthKit via an audited native bridge. Apple Watch data normally syncs through the paired iPhone.
