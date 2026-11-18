@@ -240,6 +240,14 @@ daily steps and active energy (same seed + date → same numbers); today's total
 of day. The UI always shows a "Simulated data" notice. Real adapters (HealthKit, Health Connect)
 will implement the same `ActivityDataSource` interface.
 
+The competition demo (#3, `src/features/demo`) uses its own seeded world: five invented players
+based on the #14 fitness profiles, a live 7-day Step Battle (day 3 when the app opens) and a
+finished 3-day Calorie Clash scripted to end in a shared first place. Alex's phone syncs about a
+day late, to show "waiting for sync" and the grace period. The Demo controls screen can add
+activity, move the demo clock forward and change the **Demo Scoring Settings**; these only change
+the rules object given to the demo competitions (`RULES_V1` is untouched). Everything is in
+memory and resets when the app restarts or on **Reset demo**.
+
 ## iOS limitations
 
 Windows can edit shared React Native code and use cloud iOS builds, but Xcode and local iOS
