@@ -76,6 +76,7 @@ Scan the QR code using Expo Go. Full instructions: [Windows development](docs/DE
 | --- | --- |
 | [Architecture](docs/ARCHITECTURE.md) | App design and integrations |
 | [Scoring rules](docs/SCORING.md) | Competition math, eligibility, fairness and timing |
+| [Scoring validation](docs/SCORING-VALIDATION.md) | Simulated competitions: fairness findings and recommendations |
 | [Roadmap](docs/ROADMAP.md) | Planned milestones |
 | [Development](docs/DEVELOPMENT.md) | Local setup and testing |
 | [Contributing](CONTRIBUTING.md) | Issues, branches and PR workflow |

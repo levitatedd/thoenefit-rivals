@@ -115,7 +115,7 @@ goals. It is shown only to the goal owner; other players see goals and scores, n
   `max(2, ceil(days × 3/7))`. At most one per competition result.
 
 All "proposed" thresholds live in `RULES_V1` (`rules.ts`) and are meant to be tuned through
-playtesting (#14).
+playtesting. Simulation results and recommendations: [SCORING-VALIDATION.md](SCORING-VALIDATION.md) (#14).
 
 ## API
 
@@ -152,4 +152,4 @@ const leaderboard = toPublicStandings(result); // safe to show to other particip
   provenance from the adapters, or a review flow: follow-up with #6.
 - Leaderboard and competition screens: #3.
 - Persistence, accounts, and any server-side verification: #7, #8; anti-cheating policy: #10.
-- Threshold tuning with simulated competitions: #14.
+- Simulated validation of the rules: #14 → [SCORING-VALIDATION.md](SCORING-VALIDATION.md). Real-world playtesting comes later.

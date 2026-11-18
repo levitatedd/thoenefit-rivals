@@ -100,7 +100,8 @@ This runs, in order: `tsc --noEmit`, `expo lint` (ESLint 9 + `eslint-config-expo
 compatibility), `prettier --check`, and Jest (`jest-expo` preset + React Native Testing Library).
 All must pass before opening a PR.
 
-Individual commands: `npm run typecheck`, `npm run lint`, `npm test`, `npm run format`
+Individual commands: `npm run typecheck`, `npm run lint`, `npm test`, `npm run format`, `npm run simulate:report`
+(regenerates [SCORING-VALIDATION.md](SCORING-VALIDATION.md) from the seeded scoring simulations; takes a few minutes),
 (auto-fix formatting), `npm run doctor` (Expo's project health check; needs internet).
 
 ## Continuous integration (GitHub Actions)
