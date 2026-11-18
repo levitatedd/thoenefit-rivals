@@ -73,14 +73,6 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
-        if: steps.apk-cache.outputs.cache-hit != 'true'
-        with:
-          # Open-source GitHub Actions cache, not the commercially licensed "enhanced" provider.
-          cache-provider: basic
-          # Default is read-only off the default branch; write so later PR runs are warm.
-          cache-read-only: false
-
       - name: Install dependencies
         if: steps.apk-cache.outputs.cache-hit != 'true'
         working-directory: apps/mobile
@@ -92,6 +84,15 @@ jobs:
         run: npx expo prebuild --platform android --no-install
         env:
           CI: '1'
+
+      # Must come after prebuild: the basic provider keys its cache on the generated Gradle files.
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        if: steps.apk-cache.outputs.cache-hit != 'true'
+        with:
+          # Open-source GitHub Actions cache, not the commercially licensed "enhanced" provider.
+          cache-provider: basic
+          # Default is read-only off the default branch; write so later PR runs are warm.
+          cache-read-only: false
 
       - name: Build release APK (x86_64, debug-signed, JS bundled in)
         if: steps.apk-cache.outputs.cache-hit != 'true'
