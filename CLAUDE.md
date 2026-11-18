@@ -41,3 +41,10 @@
 - Request owner action only for unavoidable account setup, permissions, billing, signing, device installation, or acceptance testing. Give concise, exact steps.
 - Never incur costs, make major architectural commitments, publish releases, or deploy production changes without explicit approval.
 - Explain test evidence and limitations truthfully; AI-generated code still requires review, especially for health-data privacy and security.
+
+## Pull request and release quality gates
+- Every implementation PR must link its corresponding GitHub issue (for example, `Closes #15` when merging should close it, or `Refs #15` when it should remain open).
+- Before requesting a merge, run the relevant lint, typecheck, automated tests, and build checks. All required CI checks must pass; if a check is unavailable or fails, explain why and do not claim the PR is ready.
+- Update the README and relevant docs whenever user-facing features, installation, configuration, or architecture change. Keep the README accurate rather than duplicating the issue backlog.
+- Never merge incomplete, unreviewed, or failing work into `main`. Use feature branches and `staging` for unfinished development; production promotion requires explicit owner approval.
+- For each `staging` to `main` promotion, provide a concise release summary covering included issues/PRs, user-visible changes, tests performed, migrations or configuration changes, known limitations, and rollback considerations.
