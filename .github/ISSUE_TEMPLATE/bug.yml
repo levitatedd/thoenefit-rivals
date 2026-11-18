@@ -1,0 +1,28 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you saw, and what you expected instead. Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1. 
+        2. 
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and app version
+      description: e.g. iPhone 16, iOS 27.1, Expo Go; app version from the About screen
+  - type: markdown
+    attributes:
+      value: "⚠️ Do not paste real health data, tokens, or personal information into this issue."

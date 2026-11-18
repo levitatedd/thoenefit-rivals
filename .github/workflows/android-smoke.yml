@@ -1,0 +1,103 @@
+name: Android emulator smoke test
+
+# Builds a standalone Android app, launches it on an emulator, checks the simulated
+# dashboard appears, and uploads a screenshot. Opt-in because it takes ~20-30 runner minutes:
+# add the `android-smoke` label to a PR to run it (remove and re-add to run again).
+
+on:
+  pull_request:
+    branches: [staging, main]
+    types: [labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Launch on Android emulator
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'android-smoke'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      API_LEVEL: 35
+    steps:
+      # The release build + emulator need ~15 GB; hosted runners start with less free space.
+      # Remove large preinstalled toolchains this job never uses.
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost \
+            /opt/hostedtoolcache/CodeQL /usr/share/swift /usr/local/julia* || true
+          sudo docker image prune --all --force >/dev/null 2>&1 || true
+          df -h /
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Install dependencies
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Generate native Android project (not committed)
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform android --no-install
+        env:
+          CI: '1'
+
+      - name: Build release APK (x86_64, debug-signed, JS bundled in)
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon
+
+      - name: Keep the APK, free build space for the emulator
+        run: |
+          APP_DIR=apps/mobile/android
+          cp "$APP_DIR/app/build/outputs/apk/release/app-release.apk" "$RUNNER_TEMP/app-release.apk"
+          PACKAGE=$(grep -oE "applicationId ['\"][^'\"]+['\"]" "$APP_DIR/app/build.gradle" | head -1 | sed -E "s/applicationId ['\"]([^'\"]+)['\"]/\1/")
+          echo "APK_PATH=$RUNNER_TEMP/app-release.apk" >> "$GITHUB_ENV"
+          echo "APP_PACKAGE=$PACKAGE" >> "$GITHUB_ENV"
+          rm -rf "$APP_DIR/app/build" "$APP_DIR/build" "$APP_DIR/.gradle" apps/mobile/node_modules ~/.gradle/caches
+          df -h /
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Launch app and verify the dashboard
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          disk-size: 4096M
+          emulator-boot-timeout: 300
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash .github/scripts/android-smoke.sh
+
+      - name: Upload screenshot, UI dump and logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-smoke-results
+          path: smoke-output/
+          if-no-files-found: warn
+          retention-days: 14
