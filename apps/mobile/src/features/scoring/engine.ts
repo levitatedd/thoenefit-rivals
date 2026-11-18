@@ -1,5 +1,6 @@
 import { evaluateEligibility } from './eligibility';
 import { assessGoal, suggestFutureGoal } from './fairness';
+import { checkGoalForMode, publicGoalLabel, usualDayGoal } from './goals';
 import { assertValidGoal, centiToPoints, dailyCentiPoints, isCapped, lockGoal } from './points';
 import { CATEGORIES, RULES_V1 } from './rules';
 import { addDays, datesBetween, parseInstant, startOfDay, toInstant } from './time';
@@ -12,6 +13,7 @@ import type {
   DateKey,
   DayStatus,
   EligibilityDecision,
+  GoalMode,
   HistoryDay,
   Instant,
   Participant,
@@ -45,6 +47,11 @@ export interface NewCompetition {
   endDate: DateKey;
   participants: NewParticipant[];
   rules?: ScoringRules;
+  /**
+   * Goal mode (#32). Defaults to `choose-own`, the v1 behaviour; the competition-creation flow
+   * (#8) offers `usual-day` as its default.
+   */
+  goalMode?: GoalMode;
 }
 
 /** Competition window in epoch ms: [start of first day, start of the day after the last day), plus the finalization deadline. Throws on invalid dates or time zone. */
@@ -61,11 +68,13 @@ export function competitionWindow(
 /**
  * Creates a competition at its start: locks each participant's goal (a copy of the profile
  * goal) and snapshots their private fairness advisory. Participants must join before the start.
+ * In usual-day mode, a goal below a participant's reliable usual day is rejected (#32).
  */
 export function startCompetition(input: NewCompetition): Competition {
   const category = CATEGORIES[input.categoryId];
   if (!category) throw new Error(`Unknown competition category ${input.categoryId}`);
   const rules = input.rules ?? RULES_V1;
+  const goalMode: GoalMode = input.goalMode ?? 'choose-own';
   const { windowStart } = competitionWindow({ ...input, rules });
   const lockedAt = toInstant(windowStart);
   const participants: Participant[] = input.participants.map((p) => {
@@ -75,11 +84,16 @@ export function startCompetition(input: NewCompetition): Competition {
       );
     }
     const goal = lockGoal(category.metric, p.profileGoal, lockedAt);
+    const usual = usualDayGoal(p.history ?? [], category.metric, rules, p.permission ?? 'granted');
+    const check = checkGoalForMode(goalMode, goal.dailyGoal, usual);
+    if (!check.ok) throw new Error(`${p.displayName}: ${check.error}`);
     return {
       id: p.id,
       displayName: p.displayName,
       joinedAt: p.joinedAt,
       goal,
+      goalBasis: check.basis,
+      usualDayGoal: usual.goal,
       fairnessAtStart: assessGoal(
         goal.dailyGoal,
         p.history ?? [],
@@ -97,6 +111,7 @@ export function startCompetition(input: NewCompetition): Competition {
     startDate: input.startDate,
     endDate: input.endDate,
     rules,
+    goalMode,
     participants,
   });
 }
@@ -230,6 +245,7 @@ export function scoreCompetition(
         rules,
       ),
       ...(participant.fairnessAtStart ? { fairnessAtStart: participant.fairnessAtStart } : {}),
+      goalBasis: participant.goalBasis,
     };
   });
 
@@ -240,6 +256,7 @@ export function scoreCompetition(
     categoryId: competition.category.id,
     metric: competition.category.metric,
     rules,
+    goalMode: competition.goalMode,
     timeZone: competition.timeZone,
     phase,
     computedAt: toInstant(asOf),
@@ -278,6 +295,7 @@ export function toPublicStandings(result: CompetitionResult): PublicStanding[] {
     displayName: s.displayName,
     dailyGoal: s.goal.dailyGoal,
     metric: s.goal.metric,
+    goalLabel: publicGoalLabel(result.goalMode, s.goalBasis, s.fairnessAtStart),
     days: s.days.map(({ date, status, points, capped }) => ({ date, status, points, capped })),
     totalPoints: s.totalPoints,
     rank: s.rank,

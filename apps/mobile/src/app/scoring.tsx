@@ -68,6 +68,13 @@ export default function ScoringScreen() {
           Manually typed-in activity, the same activity recorded twice, and activity from an unknown
           source (held until it can be checked).
         </Item>
+        <Item title="Fair goals">
+          In a usual-day competition (the default), every goal starts at that player&apos;s own
+          usual day and can only be raised, so nobody can win with an easy goal. In a
+          choose-your-own competition, everyone sees a neutral label (&ldquo;goal below
+          usual&rdquo;, &ldquo;usual-day goal&rdquo;) but never anyone&apos;s history. New players
+          with limited history choose their own goal and are never penalized.
+        </Item>
         <Item title="Separate competitions">
           Step Battle scores steps and Calorie Clash scores active calories. They are never added
           together.

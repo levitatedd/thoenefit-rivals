@@ -5,7 +5,14 @@ import { Card, DemoSettingsBadge, SectionTitle, listStyles } from '@/components/
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { fromDateKey } from '@/features/activity';
-import { YOU, dayStatusLabel, placeLabel, useDemo } from '@/features/demo';
+import {
+  GOAL_LABELS,
+  YOU,
+  dayStatusLabel,
+  placeLabel,
+  useDemo,
+  type DemoCompetition,
+} from '@/features/demo';
 import { toPublicStandings, type EligibilityDecision, type Standing } from '@/features/scoring';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDayOfMonth, formatNumber, formatPoints, formatShortDate } from '@/utils/format';
@@ -45,7 +52,7 @@ export default function PlayerScreen() {
             <ThemedText type="title">{standing.displayName}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               {placeLabel(competition, standing)} · goal {formatNumber(publicView.dailyGoal)} {unit}{' '}
-              a day
+              a day · {GOAL_LABELS[publicView.goalLabel]}
             </ThemedText>
           </View>
           <View style={styles.total}>
@@ -105,7 +112,7 @@ export default function PlayerScreen() {
         </Card>
 
         {isYou ? (
-          <PrivateDetails standing={standing} />
+          <PrivateDetails competition={competition} standing={standing} />
         ) : (
           <ThemedText type="small" themeColor="textSecondary">
             You see {standing.displayName}&apos;s goal and daily points only. Their activity
@@ -117,11 +124,39 @@ export default function PlayerScreen() {
   );
 }
 
-function PrivateDetails({ standing }: { standing: Standing }) {
+function goalExplanation(competition: DemoCompetition, standing: Standing): string {
+  const participant = competition.competition.participants.find(
+    (p) => p.id === standing.participantId,
+  );
+  const usual = participant?.usualDayGoal;
+  const unit = competition.unit;
+  switch (standing.goalBasis) {
+    case 'usual-day':
+      return `Your goal is your usual day (${formatNumber(usual ?? 0)} ${unit}). In this competition goals can be raised but not lowered.`;
+    case 'raised':
+      return `You raised your goal above your usual day (${formatNumber(usual ?? 0)} ${unit}), so each point is harder to earn.`;
+    case 'limited-history':
+      return 'There isn’t enough recent history (14 days) to work out your usual day, so you chose your own goal. Others see “limited history”, and your points work exactly like everyone else’s.';
+    case 'own-choice':
+      return `Everyone chose their own goal in this competition. Others see a neutral label for yours: “${GOAL_LABELS[toPublicStandings(competition.result).find((s) => s.participantId === standing.participantId)!.goalLabel]}”, never your history.`;
+  }
+}
+
+function PrivateDetails({
+  competition,
+  standing,
+}: {
+  competition: DemoCompetition;
+  standing: Standing;
+}) {
   const theme = useTheme();
   return (
     <View style={[styles.private, { borderColor: theme.accentText }]}>
       <SectionTitle>Only you can see this</SectionTitle>
+      <ThemedText type="small">
+        <ThemedText type="smallBold">Your goal: </ThemedText>
+        {goalExplanation(competition, standing)}
+      </ThemedText>
       {standing.fairnessAtStart && (
         <ThemedText type="small">
           <ThemedText type="smallBold">Goal check: </ThemedText>

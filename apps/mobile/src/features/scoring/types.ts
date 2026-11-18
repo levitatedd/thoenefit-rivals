@@ -49,6 +49,22 @@ export interface CapSuggestionRules {
   increaseFraction: number;
 }
 
+/**
+ * Goal modes (#32, owner decision D4 in docs/PRIVACY-SECURITY.md):
+ * - `usual-day`: with reliable history, a participant's goal is at least their own usual day
+ *   (28-day median, rounded). It can be raised but not lowered. The default for new competitions.
+ * - `choose-own`: casual mode; any valid goal, with a neutral goal label visible to everyone.
+ * Participants with limited history choose their own goal in either mode and are never penalized.
+ */
+export type GoalMode = 'usual-day' | 'choose-own';
+
+export interface GoalModeRules {
+  /** Valid days in the baseline window needed for a usual-day goal ("reliable history"). */
+  usualDayMinValidDays: number;
+  /** Usual-day goals are rounded to the nearest multiple of this, per metric. */
+  roundTo: Record<MetricId, number>;
+}
+
 export interface ScoringRules {
   /** Stored with every result so historical scores are never reinterpreted by newer rules. */
   version: string;
@@ -62,6 +78,7 @@ export interface ScoringRules {
   sourcePriority: SourceKind[];
   fairness: FairnessRules;
   capSuggestion: CapSuggestionRules;
+  goalModes: GoalModeRules;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -85,7 +102,23 @@ export interface Participant {
   withdrawnAt?: Instant;
   /** Private advisory computed at start; shown only to the participant. */
   fairnessAtStart?: FairnessAssessment;
+  /** How the goal was set under the competition's goal mode (#32). */
+  goalBasis: GoalBasis;
+  /** The participant's rounded usual day when it could be estimated reliably; private. */
+  usualDayGoal: number | null;
 }
+
+/**
+ * - `usual-day`: the goal equals the participant's usual day (usual-day mode).
+ * - `raised`: the goal is above the usual day (usual-day mode).
+ * - `limited-history`: no reliable usual day, so the participant chose their own goal.
+ * - `own-choice`: casual mode with reliable history.
+ */
+export type GoalBasis = 'usual-day' | 'raised' | 'limited-history' | 'own-choice';
+
+/** Neutral goal label shown to all participants; never numbers or history. */
+export type PublicGoalLabel =
+  'usual-day' | 'near-usual' | 'below-usual' | 'above-usual' | 'limited-history';
 
 export interface Competition {
   id: string;
@@ -96,6 +129,8 @@ export interface Competition {
   startDate: DateKey;
   endDate: DateKey;
   rules: ScoringRules;
+  /** Goal mode, locked at the start like the rules (#32). */
+  goalMode: GoalMode;
   participants: Participant[];
 }
 
@@ -242,6 +277,8 @@ export interface Standing {
   goalSuggestion?: GoalSuggestion;
   /** Private: fairness advisory snapshotted at start. */
   fairnessAtStart?: FairnessAssessment;
+  /** How the goal was set (#32); feeds the public goal label. */
+  goalBasis: GoalBasis;
 }
 
 export interface CompetitionResult {
@@ -249,6 +286,7 @@ export interface CompetitionResult {
   categoryId: CategoryId;
   metric: MetricId;
   rules: ScoringRules;
+  goalMode: GoalMode;
   timeZone: string;
   phase: Phase;
   computedAt: Instant;
@@ -263,6 +301,8 @@ export interface PublicStanding {
   displayName: string;
   dailyGoal: number;
   metric: MetricId;
+  /** Neutral label about the goal (#32), disclosed at join; no numbers or history. */
+  goalLabel: PublicGoalLabel;
   days: Pick<DailyScore, 'date' | 'status' | 'points' | 'capped'>[];
   totalPoints: number;
   rank: number | null;

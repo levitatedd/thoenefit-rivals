@@ -1,5 +1,5 @@
 import { fromDateKey } from '@/features/activity';
-import type { DayStatus, Phase, Standing } from '@/features/scoring';
+import type { DayStatus, GoalMode, Phase, PublicGoalLabel, Standing } from '@/features/scoring';
 import { formatShortDate, ordinal } from '@/utils/format';
 
 import type { DemoCompetition } from './world';
@@ -50,3 +50,25 @@ export function progressLabel(competition: DemoCompetition): string {
   }
   return PHASE_LABELS[competition.result.phase];
 }
+
+/** Neutral wording for the public goal label (#32). Never numbers or history. */
+export const GOAL_LABELS: Record<PublicGoalLabel, string> = {
+  'usual-day': 'usual-day goal',
+  'near-usual': 'goal near usual',
+  'below-usual': 'goal below usual',
+  'above-usual': 'goal above usual',
+  'limited-history': 'limited history',
+};
+
+export const GOAL_MODE_LABELS: Record<GoalMode, string> = {
+  'usual-day': 'Usual-day goals',
+  'choose-own': 'Choose-your-own goals',
+};
+
+/** One-line explanation of a competition's goal mode, for participants. */
+export const GOAL_MODE_EXPLANATIONS: Record<GoalMode, string> = {
+  'usual-day':
+    'Usual-day goals: each goal starts at that player’s own usual day and can only be raised, so nobody can win with an easy goal. Players with limited history choose their own goal.',
+  'choose-own':
+    'Choose-your-own goals: players picked any goal. Labels compare each goal with that player’s own usual day, without sharing any history.',
+};

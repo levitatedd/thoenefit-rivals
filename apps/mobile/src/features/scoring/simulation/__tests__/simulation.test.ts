@@ -8,7 +8,7 @@ import {
   rawTotalsBaseline,
   tieRate,
 } from '../scenarios';
-import { simulateCompetition, statsOf, type ScenarioSpec } from '../simulate';
+import { monteCarlo, simulateCompetition, statsOf, type ScenarioSpec } from '../simulate';
 
 /**
  * Validation of the v1 scoring rules (#14) with synthetic, seeded simulations. Fewer runs than
@@ -117,6 +117,36 @@ describe('goal ambition (fairness warnings are advisory only)', () => {
     expect(statsOf(goalAmbition(1, 7, RUNS), 'tested').fairnessBands['near-usual']).toBeGreaterThan(
       0.6,
     );
+  });
+
+  it('usual-day goal mode (#32) removes the easy-goal advantage', () => {
+    // Everyone takes the usual-day default; one player asks for half their usual day and is
+    // given their usual day instead, so they win about a fair share (25%).
+    const result = monteCarlo(RUNS, (run) => ({
+      categoryId: 'step-battle',
+      days: 7,
+      goalMode: 'usual-day',
+      seed: `usual-day-mode-${run}`,
+      players: [
+        { id: 'tested', profile: 'moderate', goalFactor: 0.5 },
+        ...['peer1', 'peer2', 'peer3'].map((id) => ({
+          id,
+          profile: 'moderate' as const,
+          goalFactor: 0.1, // "whatever the minimum is": their own usual day
+        })),
+      ],
+    }));
+    expect(statsOf(goalAmbition(0.5, 7, RUNS), 'tested').winShare).toBeGreaterThan(0.9);
+    const usualDay = statsOf(result, 'tested').winShare;
+    expect(usualDay).toBeGreaterThan(0.12);
+    expect(usualDay).toBeLessThan(0.4);
+  });
+
+  it('in usual-day mode, a goal set at the average (not usual) day is effectively raised', () => {
+    // The usual day is a median; activity is skewed by big days, so the average is higher.
+    // Players who keep the default compete on equal terms; those who raise it give up a little.
+    const raisedPeers = statsOf(goalAmbition(0.5, 7, RUNS, 'usual-day'), 'tested').winShare;
+    expect(raisedPeers).toBeGreaterThan(0.3);
   });
 
   it('an honest goal wins about a fair share; an ambitious goal (130%) rarely wins', () => {

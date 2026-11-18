@@ -1,10 +1,12 @@
 import { scoreCompetition, startCompetition } from '../engine';
-import { CATEGORIES } from '../rules';
+import { usualDayGoal } from '../goals';
+import { CATEGORIES, RULES_V1 } from '../rules';
 import { addDays, startOfDay } from '../time';
 import type {
   ActivityRecord,
   CategoryId,
   CompetitionResult,
+  GoalMode,
   HistoryDay,
   Standing,
   SyncState,
@@ -38,6 +40,11 @@ export interface ScenarioSpec {
   days: number;
   players: PlayerSpec[];
   seed: string;
+  /**
+   * Goal mode (#32). In `usual-day` mode a player who asks for a goal below their reliable usual
+   * day gets their usual day instead (what the app's goal step enforces). Default `choose-own`.
+   */
+  goalMode?: GoalMode;
 }
 
 export interface SimulatedCompetition {
@@ -74,16 +81,23 @@ export function simulateCompetition(spec: ScenarioSpec): SimulatedCompetition {
       const profile = PROFILES[p.profile];
       const mean = profile.mean[category.metric];
       const step = category.metric === 'steps' ? 100 : 10;
-      const goal = Math.max(step, Math.round((mean * p.goalFactor) / step) * step);
+      const requested = Math.max(step, Math.round((mean * p.goalFactor) / step) * step);
+      const history = historyFor(p, mean, profile.cv, spec.seed);
+      const usual = usualDayGoal(history, category.metric, RULES_V1);
+      const goal =
+        spec.goalMode === 'usual-day' && usual.goal !== null
+          ? Math.max(requested, usual.goal)
+          : requested;
       goals[p.id] = goal;
       return {
         id: p.id,
         displayName: p.id,
         joinedAt: `${addDays(SIM_START, -1)}T12:00:00Z`,
         profileGoal: goal,
-        history: historyFor(p, mean, profile.cv, spec.seed),
+        history,
       };
     }),
+    goalMode: spec.goalMode,
   });
 
   const records: ActivityRecord[] = [];

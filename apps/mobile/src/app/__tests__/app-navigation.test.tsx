@@ -33,7 +33,7 @@ describe('demo app (real layouts, simulated data, real scoring engine)', () => {
     await renderApp();
 
     expect(await screen.findByText('Simulated data')).toBeOnTheScreen();
-    expect(screen.getByLabelText(/^Steps: [\d,]+ of 8,500 steps goal$/)).toBeOnTheScreen();
+    expect(screen.getByLabelText(/^Steps: [\d,]+ of [\d,]+ steps goal$/)).toBeOnTheScreen();
     expect(screen.getByLabelText(/^Active energy: [\d,]+ of 450 kcal goal$/)).toBeOnTheScreen();
     expect(screen.getByText(/pts today$/)).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: /^Step Battle: .* Day 3 of 7$/ })).toBeOnTheScreen();
@@ -87,7 +87,7 @@ describe('demo app (real layouts, simulated data, real scoring engine)', () => {
   it('explains scoring with your own numbers', async () => {
     await renderApp('/scoring');
     expect(await screen.findByText('At most 200 points a day')).toBeOnTheScreen();
-    expect(screen.getByText(/÷ 8,500 goal × 100 = [\d.,]+ pts/)).toBeOnTheScreen();
+    expect(screen.getByText(/÷ [\d,]+ goal × 100 = [\d.,]+ pts/)).toBeOnTheScreen();
   });
 
   it('changes demo-only scoring settings, labels them, and resets to the standard rules', async () => {

@@ -38,4 +38,10 @@ export const RULES_V1: Readonly<ScoringRules> = Object.freeze({
     minCapDays: 2,
     increaseFraction: 0.1, // proposed: +10%
   }),
+  // Goal modes (#32, owner decision D4): "reliable history" = 14+ valid days in the last 28
+  // (can be raised, e.g. to 21, after testing). Usual-day goals round to 100 steps / 10 kcal.
+  goalModes: Object.freeze({
+    usualDayMinValidDays: 14,
+    roundTo: Object.freeze({ steps: 100, activeEnergyKcal: 10 }),
+  }),
 }) as ScoringRules;

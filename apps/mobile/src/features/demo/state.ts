@@ -1,4 +1,4 @@
-import { RULES_V1, type CategoryId } from '@/features/scoring';
+import { RULES_V1, type CategoryId, type GoalMode } from '@/features/scoring';
 
 import { DEMO_PLAYERS, defaultGoal, type DemoPlayerId } from './players';
 
@@ -23,7 +23,17 @@ export interface DemoState {
   added: Record<CategoryId, Record<string, number>>;
   /** Changes every simulated value when shuffled. */
   seed: number;
+  /**
+   * Goal mode per demo competition (#32). A real competition option chosen by the organizer
+   * (#8), not a scoring-rule change, so it doesn't trigger the "demo scoring settings" notice.
+   */
+  goalModes: Record<CategoryId, GoalMode>;
 }
+
+export const DEFAULT_GOAL_MODES: Readonly<Record<CategoryId, GoalMode>> = Object.freeze({
+  'step-battle': 'usual-day',
+  'calorie-clash': 'choose-own',
+});
 
 export const SETTING_LIMITS = {
   dailyCapPoints: { min: 50, max: 500, step: 25 },
@@ -54,6 +64,7 @@ export function initialDemoState(anchorDate: string): DemoState {
     clockOffsetMs: 0,
     added: { 'step-battle': {}, 'calorie-clash': {} },
     seed: 1,
+    goalModes: { ...DEFAULT_GOAL_MODES },
   };
 }
 
@@ -73,6 +84,7 @@ export type DemoAction =
   | { type: 'set-cap'; value: number }
   | { type: 'set-points-per-goal'; value: number }
   | { type: 'set-goal'; categoryId: CategoryId; playerId: DemoPlayerId; value: number }
+  | { type: 'set-goal-mode'; categoryId: CategoryId; mode: GoalMode }
   | { type: 'shuffle' }
   | { type: 'reset'; anchorDate: string };
 
@@ -134,6 +146,8 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
         },
       };
     }
+    case 'set-goal-mode':
+      return { ...state, goalModes: { ...state.goalModes, [action.categoryId]: action.mode } };
     case 'shuffle':
       return { ...state, seed: state.seed + 1 };
     case 'reset':

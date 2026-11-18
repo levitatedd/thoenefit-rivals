@@ -10,7 +10,6 @@ import {
   type CategoryId,
   type Competition,
   type CompetitionResult,
-  type HistoryDay,
   type ScoringRules,
   type Standing,
   startOfDay,
@@ -19,7 +18,15 @@ import {
 import { createRandom, dailyMultiplier } from '@/features/scoring/simulation/random';
 import { PROFILES } from '@/features/scoring/simulation/profiles';
 
-import { DEMO_PLAYERS, YOU, typicalDay, type DemoPlayer, type DemoPlayerId } from './players';
+import {
+  DEMO_PLAYERS,
+  YOU,
+  playerHistory,
+  playerUsualDay,
+  typicalDay,
+  type DemoPlayer,
+  type DemoPlayerId,
+} from './players';
 import { settingsChanged, type DemoState } from './state';
 
 /**
@@ -141,13 +148,19 @@ function activityAt(
   return base + added;
 }
 
-function history(state: DemoState, player: DemoPlayer, categoryId: CategoryId, start: string) {
-  const random = createRandom(`demo-history|${categoryId}|${player.id}`);
-  const typical = typicalDay(player, categoryId);
-  return Array.from({ length: 28 }, (_, i): HistoryDay => ({
-    date: addDays(start, -1 - i),
-    value: Math.round(typical * dailyMultiplier(random, PROFILES[player.profile].cv)),
-  }));
+/**
+ * The goal a player competes with: their demo goal setting, raised to their usual day in a
+ * usual-day competition (the app's goal step won't go lower when history is reliable, #32).
+ */
+export function effectiveGoal(
+  state: DemoState,
+  player: DemoPlayer,
+  categoryId: CategoryId,
+): { goal: number; minimum: number | null } {
+  const requested = state.settings.goals[categoryId][player.id];
+  const usual = playerUsualDay(player, categoryId);
+  const minimum = state.goalModes[categoryId] === 'usual-day' ? usual.goal : null;
+  return { goal: minimum === null ? requested : Math.max(requested, minimum), minimum };
 }
 
 function buildCompetition(
@@ -173,9 +186,10 @@ function buildCompetition(
       id: p.id,
       displayName: p.displayName,
       joinedAt,
-      profileGoal: state.settings.goals[spec.categoryId][p.id],
-      history: history(state, p, spec.categoryId, startDate),
+      profileGoal: effectiveGoal(state, p, spec.categoryId).goal,
+      history: playerHistory(p, spec.categoryId, startDate),
     })),
+    goalMode: state.goalModes[spec.categoryId],
   });
   const { dates, windowEnd, finalizesAt } = competitionWindow(competition);
 

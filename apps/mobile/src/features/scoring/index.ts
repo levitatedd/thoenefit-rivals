@@ -14,6 +14,8 @@ export {
 } from './points';
 export { evaluateEligibility, EXPLANATIONS } from './eligibility';
 export { computeBaseline, assessGoal, capSuggestionThreshold, suggestFutureGoal } from './fairness';
+export { usualDayGoal, checkGoalForMode, publicGoalLabel } from './goals';
+export type { UsualDay } from './goals';
 export {
   startCompetition,
   scoreCompetition,

@@ -157,6 +157,7 @@ export function Stepper({
   changed,
   onDecrease,
   onIncrease,
+  decreaseDisabled = false,
 }: {
   label: string;
   value: number;
@@ -164,6 +165,8 @@ export function Stepper({
   changed: boolean;
   onDecrease: () => void;
   onIncrease: () => void;
+  /** E.g. a usual-day goal can't go lower (#32). */
+  decreaseDisabled?: boolean;
 }) {
   const theme = useTheme();
   return (
@@ -174,8 +177,14 @@ export function Stepper({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Decrease ${label}`}
+        accessibilityState={{ disabled: decreaseDisabled }}
+        disabled={decreaseDisabled}
         onPress={onDecrease}
-        style={[styles.stepButton, { backgroundColor: theme.border }]}>
+        style={[
+          styles.stepButton,
+          { backgroundColor: theme.border },
+          decreaseDisabled && styles.disabled,
+        ]}>
         <ThemedText type="subtitle">−</ThemedText>
       </Pressable>
       <ThemedText
