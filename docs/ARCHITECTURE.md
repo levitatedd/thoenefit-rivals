@@ -25,6 +25,9 @@ Candidate metrics: active energy (kcal), step count, exercise minutes. Start wit
 
 ## Integrity and privacy
 
+Requirements, threat model and release gates: [PRIVACY-SECURITY.md](PRIVACY-SECURITY.md) (#10). Summary:
+
+
 - Deduplicate overlapping records and avoid double counting multiple providers.
 - Handle delayed uploads, corrected data, missing permissions, timezone and daylight-saving changes.
 - Use least-privilege health permissions, authenticated writes, row-level security, and server-side score validation.
