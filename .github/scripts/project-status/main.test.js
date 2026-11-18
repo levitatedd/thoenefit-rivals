@@ -75,6 +75,11 @@ function fakeEnvironment({ issues = {}, board = {}, failFirstGraphql = 0, ignore
         update: async ({ issue_number, state: s }) => {
           state.issues[issue_number].state = s;
         },
+        removeLabel: async ({ issue_number, name }) => {
+          const labels = state.issues[issue_number]?.labels ?? [];
+          if (!labels.includes(name)) throw Object.assign(new Error('Label does not exist'), { status: 404 });
+          state.issues[issue_number].labels = labels.filter((l) => l !== name);
+        },
       },
     },
   };
@@ -226,4 +231,32 @@ test('fork PRs are ignored', async () => {
   }, { checksResult: 'success' });
   assert.equal(env.state.board.I13, 'In Progress');
   assert.equal(env.state.graphqlCalls, 0);
+});
+
+test('merge into staging removes the in-progress label from closed issues only', async () => {
+  const env = fakeEnvironment({
+    issues: {
+      13: { node_id: 'I13', state: 'open', labels: ['status: in progress'] },
+      17: { node_id: 'I17', state: 'open', labels: ['status: in progress'] },
+    },
+    board: { I13: 'In Review', I17: 'In Progress' },
+  });
+  await runWith(env, { eventName: 'pull_request', payload: { action: 'closed', pull_request: prPayload({ merged: true }) } });
+  assert.deepEqual(env.state.issues[13].labels, []);
+  assert.deepEqual(env.state.issues[17].labels, ['status: in progress']); // "Refs" only: still open, keeps label
+  assert.equal(env.state.failed, null);
+});
+
+test('closing an issue removes the in-progress label; a missing label is not an error', async () => {
+  const env = fakeEnvironment({
+    issues: { 13: { node_id: 'I13', state: 'closed', labels: ['status: in progress'] }, 14: { node_id: 'I14', state: 'closed', labels: [] } },
+    board: { I13: 'In Review', I14: 'In Progress' },
+  });
+  await runWith(env, { eventName: 'issues', payload: { action: 'closed', issue: { number: 13, node_id: 'I13', state: 'closed', state_reason: 'completed', labels: [] } } });
+  await runWith(env, { eventName: 'issues', payload: { action: 'closed', issue: { number: 14, node_id: 'I14', state: 'closed', state_reason: 'completed', labels: [] } } });
+  assert.deepEqual(env.state.issues[13].labels, []);
+  assert.equal(env.state.board.I13, 'Done');
+  assert.equal(env.state.board.I14, 'Done');
+  assert.equal(env.state.warnings.length, 0);
+  assert.equal(env.state.failed, null);
 });

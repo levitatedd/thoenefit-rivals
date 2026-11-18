@@ -9,6 +9,7 @@ const {
   parseLinkedIssues,
   decideStatus,
   shouldCloseIssueOnMerge,
+  shouldRemoveInProgressLabel,
 } = require('./rules');
 
 const REPO = 'levitatedd/thoenefit-rivals';
@@ -134,4 +135,12 @@ test('PR closed without merging is never treated as completed', () => {
   assert.equal(decideStatus(event, STATUS.IN_REVIEW).status, STATUS.IN_PROGRESS);
   assert.equal(decideStatus(event, STATUS.IN_PROGRESS).status, null);
   assert.equal(shouldCloseIssueOnMerge(event), false);
+});
+
+test('in-progress label is removed only when the issue becomes closed', () => {
+  assert.equal(shouldRemoveInProgressLabel({ type: 'issue_closed' }), true);
+  assert.equal(shouldRemoveInProgressLabel(closed()), true);
+  assert.equal(shouldRemoveInProgressLabel(closed({ closes: false })), false);
+  assert.equal(shouldRemoveInProgressLabel(closed({ merged: false })), false);
+  assert.equal(shouldRemoveInProgressLabel({ type: 'issue_reopened' }), false);
 });

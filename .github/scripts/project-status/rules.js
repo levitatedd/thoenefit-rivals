@@ -122,10 +122,16 @@ function shouldCloseIssueOnMerge(event) {
   return event.type === 'pr_closed' && event.merged && event.baseRef === 'staging' && event.closes;
 }
 
+/** Whether the "work started" label should be removed because the issue is now closed. */
+function shouldRemoveInProgressLabel(event) {
+  return event.type === 'issue_closed' || shouldCloseIssueOnMerge(event);
+}
+
 module.exports = {
   STATUS,
   IN_PROGRESS_LABEL,
   parseLinkedIssues,
   decideStatus,
   shouldCloseIssueOnMerge,
+  shouldRemoveInProgressLabel,
 };
