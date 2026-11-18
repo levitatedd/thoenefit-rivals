@@ -29,6 +29,7 @@ Scan the QR code with Expo Go on your phone. Full steps: [docs/DEVELOPMENT.md](d
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Scoring rules](docs/SCORING.md)
+- [Scoring validation (simulations)](docs/SCORING-VALIDATION.md)
 - [Windows development](docs/DEVELOPMENT.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Dependency audit](docs/DEPENDENCY-AUDIT.md)
