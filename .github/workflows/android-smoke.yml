@@ -1,0 +1,195 @@
+name: Android emulator smoke test
+
+# Builds a standalone Android app, launches it on an emulator, checks the simulated
+# dashboard appears, and uploads a screenshot. Opt-in because it uses Actions minutes:
+# add the `android-smoke` label to a PR to run it (remove and re-add to run again).
+#
+# Speed-ups (#19):
+# - build and emulator run in separate jobs, so the build can save its Gradle cache and the
+#   emulator gets a fresh runner with plenty of disk;
+# - the APK is cached by a hash of the app's sources: re-running without app changes skips
+#   the build entirely;
+# - Gradle state uses the open-source `basic` cache provider (GitHub Actions cache), written
+#   on PR branches too;
+# - the AVD, its system image and a booted snapshot are cached, so later runs warm-boot.
+# Caches are scoped per branch: the first run on a PR is cold, later runs on it are warm.
+# Measured on PR #20: cold 28.6 min; app changed 11.4 min; app unchanged 3.4 min.
+
+on:
+  pull_request:
+    branches: [staging, main]
+    types: [labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  API_LEVEL: 35
+  TARGET: google_apis
+  ARCH: x86_64
+  # Bump to invalidate the emulator cache (e.g. after changing emulator settings).
+  AVD_CACHE_VERSION: v1
+
+jobs:
+  build:
+    name: Build release APK
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'android-smoke'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      package: ${{ steps.meta.outputs.package }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Everything that ends up in the APK. If none of it changed, reuse the cached APK.
+      - name: Restore cached APK
+        id: apk-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apk-out
+          key: android-apk-${{ hashFiles('apps/mobile/src/**', 'apps/mobile/assets/**', 'apps/mobile/app.json', 'apps/mobile/package-lock.json', 'apps/mobile/babel.config.*', 'apps/mobile/metro.config.*', 'apps/mobile/tsconfig.json', '.github/workflows/android-smoke.yml') }}
+
+      - name: Free disk space
+        if: steps.apk-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost \
+            /opt/hostedtoolcache/CodeQL /usr/share/swift /usr/local/julia* || true
+          df -h /
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.apk-cache.outputs.cache-hit != 'true'
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        if: steps.apk-cache.outputs.cache-hit != 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        if: steps.apk-cache.outputs.cache-hit != 'true'
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Generate native Android project (not committed)
+        if: steps.apk-cache.outputs.cache-hit != 'true'
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform android --no-install
+        env:
+          CI: '1'
+
+      # Must come after prebuild: the basic provider keys its cache on the generated Gradle files.
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        if: steps.apk-cache.outputs.cache-hit != 'true'
+        with:
+          # Open-source GitHub Actions cache, not the commercially licensed "enhanced" provider.
+          cache-provider: basic
+          # Default is read-only off the default branch; write so later PR runs are warm.
+          cache-read-only: false
+
+      - name: Build release APK (x86_64, debug-signed, JS bundled in)
+        if: steps.apk-cache.outputs.cache-hit != 'true'
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --build-cache
+
+      - name: Collect APK and package name
+        if: steps.apk-cache.outputs.cache-hit != 'true'
+        run: |
+          APP_DIR=apps/mobile/android
+          mkdir -p apk-out
+          cp "$APP_DIR/app/build/outputs/apk/release/app-release.apk" apk-out/app-release.apk
+          grep -oE "applicationId ['\"][^'\"]+['\"]" "$APP_DIR/app/build.gradle" | head -1 \
+            | sed -E "s/applicationId ['\"]([^'\"]+)['\"]/\1/" > apk-out/package.txt
+
+      - name: Report build source
+        id: meta
+        run: |
+          echo "package=$(cat apk-out/package.txt)" >> "$GITHUB_OUTPUT"
+          if [ "${{ steps.apk-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "::notice::App sources unchanged: reused cached APK, build skipped."
+          fi
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-apk
+          path: apk-out/app-release.apk
+          retention-days: 1
+
+  smoke:
+    name: Launch on Android emulator
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: android-apk
+          path: ${{ runner.temp }}/apk
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Restore cached emulator (AVD, system image, boot snapshot)
+        id: avd-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+            /usr/local/lib/android/sdk/system-images/android-${{ env.API_LEVEL }}/${{ env.TARGET }}/${{ env.ARCH }}
+          key: avd-${{ env.API_LEVEL }}-${{ env.TARGET }}-${{ env.ARCH }}-${{ env.AVD_CACHE_VERSION }}
+
+      - name: Create emulator and boot snapshot (cache miss only)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          target: ${{ env.TARGET }}
+          arch: ${{ env.ARCH }}
+          force-avd-creation: false
+          disk-size: 4096M
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          # Let the system finish first-boot work so the snapshot is quiet (fewer launcher ANRs).
+          script: sleep 60 && echo "Generated AVD snapshot for caching."
+
+      - name: Launch app and verify the dashboard
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          APK_PATH: ${{ runner.temp }}/apk/app-release.apk
+          APP_PACKAGE: ${{ needs.build.outputs.package }}
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          target: ${{ env.TARGET }}
+          arch: ${{ env.ARCH }}
+          force-avd-creation: false
+          disk-size: 4096M
+          emulator-boot-timeout: 300
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: bash .github/scripts/android-smoke.sh
+
+      - name: Upload screenshot, UI dump and logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-smoke-results
+          path: smoke-output/
+          if-no-files-found: warn
+          retention-days: 14

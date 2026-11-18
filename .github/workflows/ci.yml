@@ -1,0 +1,163 @@
+name: CI
+
+# Required checks for every PR into staging/main, plus a re-check after merge.
+# The "Mobile checks (Linux)" job is the one to mark as required in branch protection.
+
+on:
+  pull_request:
+    branches: [staging, main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [staging, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  checks:
+    name: Mobile checks (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install (clean, from lockfile)
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Unit and component tests
+        run: npm test -- --ci
+
+      - name: Build check (Android + iOS JS bundles)
+        run: npx expo export --platform android --platform ios --output-dir "$RUNNER_TEMP/export"
+
+      - name: Automation script tests
+        working-directory: .
+        run: node --test ".github/scripts/**/*.test.js"
+
+  windows:
+    name: Mobile checks (Windows)
+    # Windows-first project: catch path, line-ending and shell issues before the owner hits them.
+    # PRs only, to save Actions minutes (Windows minutes count double on private repos).
+    if: github.event_name == 'pull_request'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install (clean, from lockfile)
+        run: npm ci
+
+      - name: Typecheck, lint, format check, tests
+        run: npm run check
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Report all advisories (informational)
+        run: |
+          npm audit --package-lock-only --json > "$RUNNER_TEMP/audit.json" || true
+          node -e '
+            const a = require(process.argv[1]);
+            const v = a.metadata?.vulnerabilities ?? {};
+            const roots = Object.values(a.vulnerabilities ?? {})
+              .flatMap((x) => x.via.filter((y) => typeof y === "object"))
+              .filter((y, i, all) => all.findIndex((z) => z.url === y.url) === i);
+            const lines = [
+              "### npm audit (apps/mobile)",
+              "",
+              `Total: ${v.total ?? 0} — critical ${v.critical ?? 0}, high ${v.high ?? 0}, moderate ${v.moderate ?? 0}, low ${v.low ?? 0}`,
+              "",
+              `Root advisories (${roots.length}):`,
+              ...roots.map((r) => `- **${r.name}** ${r.range} — ${r.severity} — [${r.title}](${r.url})`),
+              "",
+              "Known build-time-only advisories are tracked in issue #17 and docs/DEPENDENCY-AUDIT.md.",
+            ];
+            require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+            console.log(lines.join("\n"));
+          ' "$RUNNER_TEMP/audit.json"
+
+      - name: Fail on critical advisories
+        run: npm audit --package-lock-only --audit-level=critical
+
+  project-status:
+    name: Project board (In Review)
+    # Moves issues linked from a ready (non-draft) PR into staging to "In Review" only after
+    # the required checks pass; moves them back to "In Progress" if checks fail.
+    needs: [checks, windows]
+    if: >-
+      always() &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.base.ref == 'staging' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      needs.checks.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Board updates must never block merging; failures are still shown on the job.
+    continue-on-error: true
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          PROJECT_OWNER: ${{ vars.PROJECT_OWNER || github.repository_owner }}
+          PROJECT_NUMBER: ${{ vars.PROJECT_NUMBER || '4' }}
+          CHECKS_RESULT: >-
+            ${{ (needs.checks.result == 'success' &&
+                 (needs.windows.result == 'success' || needs.windows.result == 'skipped'))
+                && 'success' || 'failure' }}
+        with:
+          script: |
+            const run = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/project-status/main.js`);
+            await run({ github, context, core, getOctokit, checksResult: process.env.CHECKS_RESULT });

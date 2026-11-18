@@ -1,0 +1,46 @@
+name: Project board status
+
+# Keeps GitHub Project #4 in sync with issue/PR activity. "In Review" is handled in ci.yml
+# (it must wait for CI). Rules and tests: .github/scripts/project-status/.
+#
+# NOTE: GitHub runs `issues` workflows only from the DEFAULT branch (main). The issue-based
+# transitions below (label → In Progress, reopened → Todo, closed → Done) become active once
+# this file is promoted to main. The pull_request transitions work from staging immediately.
+
+on:
+  issues:
+    types: [labeled, reopened, closed]
+  pull_request:
+    branches: [staging, main]
+    types: [closed, converted_to_draft]
+
+permissions:
+  contents: read
+  issues: write # close issues when a PR with "Closes #N" merges into staging
+  pull-requests: read
+
+concurrency:
+  # Serialize updates per issue/PR so events are applied in order.
+  group: project-status-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Update board
+    if: github.event_name == 'issues' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          PROJECT_OWNER: ${{ vars.PROJECT_OWNER || github.repository_owner }}
+          PROJECT_NUMBER: ${{ vars.PROJECT_NUMBER || '4' }}
+        with:
+          script: |
+            const run = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/project-status/main.js`);
+            await run({ github, context, core, getOctokit });
