@@ -231,7 +231,7 @@ export function renderReport(): string {
   w('## Decisions');
   w();
   w(
-    'The owner reviewed these findings in #10 (`docs/PRIVACY-SECURITY.md`, decision D4). The points formula and the 200-point cap are unchanged.',
+    'The owner reviewed these findings in #10 (decision D4). The options, with extra simulations of goals at 80–95% of a usual day, are in [PRIVACY-SECURITY.md → Easy goals](PRIVACY-SECURITY.md#5-easy-goals-options-for-a-decision). The points formula and the 200-point cap are unchanged.',
   );
   w();
   w(
@@ -246,10 +246,6 @@ export function renderReport(): string {
   w('4. **Ties:** shared places stay, and the leaderboard explains them (done, #3).');
   w(
     '5. **Validate with real data later:** these simulations assume ±30% daily variation for everyone; real variability differs by person and device. Re-run with real (consented) aggregates when health integrations exist.',
-  );
-  w();
-  w(
-    'Owner decision on these options, with extra simulations (goals at 80–95% of a usual day): [PRIVACY-SECURITY.md → Easy goals](PRIVACY-SECURITY.md#5-easy-goals-options-for-a-decision) (#10).',
   );
   w();
   w('## Limitations');

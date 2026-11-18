@@ -91,15 +91,13 @@ Four moderate players, all with the same goal factor. Share of competitions wher
 
 ## Decisions
 
-The owner reviewed these findings in #10 (`docs/PRIVACY-SECURITY.md`, decision D4). The points formula and the 200-point cap are unchanged.
+The owner reviewed these findings in #10 (decision D4). The options, with extra simulations of goals at 80–95% of a usual day, are in [PRIVACY-SECURITY.md → Easy goals](PRIVACY-SECURITY.md#5-easy-goals-options-for-a-decision). The points formula and the 200-point cap are unchanged.
 
 1. **Keep the core formula.** Goal-relative points with a per-day cap level fitness differences, reward consistency, limit outlier days and still allow comebacks.
 2. **Clearer private advice (done, #31):** "near usual" is now 90–110%, and the advice explains that lower goals make points easier and higher goals make them harder.
 3. **Usual-day goals as the default competition mode, with neutral goal labels in casual mode (planned, #32):** goals start at each player’s own usual day and can only be raised; players with limited history choose their own goal and are never penalized.
 4. **Ties:** shared places stay, and the leaderboard explains them (done, #3).
 5. **Validate with real data later:** these simulations assume ±30% daily variation for everyone; real variability differs by person and device. Re-run with real (consented) aggregates when health integrations exist.
-
-Owner decision on these options, with extra simulations (goals at 80–95% of a usual day): [PRIVACY-SECURITY.md → Easy goals](PRIVACY-SECURITY.md#5-easy-goals-options-for-a-decision) (#10).
 
 ## Limitations
 
