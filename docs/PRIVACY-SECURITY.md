@@ -1,10 +1,11 @@
 # Privacy, security and anti-cheating requirements (#10)
 
-**Status:** requirements and design. **Nothing in this document is implemented yet**, apart from the
-scoring-engine rules already merged in #2. Items marked **Decision needed** wait for the owner's
-approval. Items marked **Proposed** become requirements once this document is approved. The
-scoring formula and thresholds stay unchanged until the owner decides otherwise
-([Section 5](#5-easy-goals-options-for-a-decision)).
+**Status:** requirements and design; **owner decisions recorded 2026-11-18** (see the
+[decision log](#8-decision-log)). **Nothing in this document is implemented yet**, apart from the
+scoring-engine rules already merged in #2. **Approved** items are owner decisions. **Proposed**
+items are requirements that become binding when this document is merged. The points formula is
+unchanged. The approved easy-goal changes ([Section 5](#5-easy-goals-options-for-a-decision)) are
+implemented in their own follow-up issues.
 
 Inputs: the scoring specification ([#2](https://github.com/levitatedd/thoenefit-rivals/issues/2),
 [SCORING.md](SCORING.md)), the simulation findings ([#14](https://github.com/levitatedd/thoenefit-rivals/issues/14),
@@ -73,7 +74,7 @@ stopping someone who wears another person's phone or watch, and moderating user-
 | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `ACC-1` | Sign in with **Sign in with Apple**, **Google**, or an **email one-time link or code**. We never store passwords. The provider choice is made in #7. Sign in with Apple is mandatory on iOS whenever another social login is offered. | Proposed |
 | `ACC-2` | **Minimal profile:** display name (any nickname) and optional bundled avatar. No real name, birthday, gender, weight or phone number. The email address is used for sign-in only and is never shown to other users.                                    | Proposed |
-| `ACC-3` | **Age:** testers and users must be **18+** for beta (health data plus minors adds legal duties). Self-declared at sign-up; revisit before any public launch.                                                                                 | Decision needed |
+| `ACC-3` | **Age:** testers and users must be **18+** for beta (health data plus minors adds legal duties). Self-declared at sign-up; revisit before any public launch.                                                                                 | **Approved** |
 | `ACC-4` | **Sessions:** short-lived access tokens with rotating refresh tokens, stored only in the platform keychain/keystore (`expo-secure-store`), never in plain storage or logs.                                                                       | Proposed |
 | `ACC-5` | **Sign out everywhere** and revoke all sessions from settings; sessions are also revoked on account deletion.                                                                                                                                      | Proposed |
 | `ACC-6` | **Rate limiting** on sign-in, invite redemption and data upload; generic error messages that don't reveal whether an email address has an account.                                                                                                | Proposed |
@@ -145,7 +146,7 @@ types, or activity outside the competitions you joined.
 | `DAT-2` | Upload only the rows in the table above. Uploads are keyed by (participant, competition, day, metric), so a re-upload **replaces** the previous value and never adds to it.                                                                        | Proposed        |
 | `DAT-3` | Health data is used **only** to run competitions. No advertising, profiling, selling or sharing with third parties, and no third-party analytics or ads SDKs. Required by the Apple HealthKit and Google Health Connect policies. | Proposed        |
 | `DAT-4` | Health values never appear in **logs, crash reports or error messages**; crash reporting (if added) scrubs payloads.                                                                                                               | Proposed        |
-| `DAT-5` | **Retention:** the daily totals and source summaries of a competition are kept until **90 days after it is final**, then deleted; only points, ranks and goal snapshots remain for history (#9). The user can delete earlier (`DEL-*`). | Decision needed |
+| `DAT-5` | **Retention:** the daily totals and source summaries of a competition are kept until **30 days after it is final**, then deleted automatically; only points, ranks and goal snapshots remain for history (#9). The user can delete earlier (`DEL-*`). | **Approved** (30 days) |
 | `DAT-6` | Operator access to production health rows is restricted and logged; no bulk exports.                                                                                                                                                | Proposed        |
 | `DAT-7` | The app caches health data only as needed to show the current screens, in app-private storage; it is cleared on sign-out.                                                                                                                       | Proposed        |
 
@@ -158,7 +159,7 @@ types, or activity outside the competitions you joined.
 | `CON-3` | **Withdrawing consent or revoking the OS permission** stops uploads. Affected days show "No permission" (#2's `permission-revoked`) rather than zero, and the user is offered `DEL-2`.                                                                                                                                                | Proposed |
 | `CON-4` | iOS doesn't tell apps whether read access was denied. Treat "no data" as unknown (never as a confirmed zero) and explain how to check the setting in the Health app.                                                                                                                                                           | Proposed |
 | `CON-5` | A **privacy policy** written in plain language and linked from sign-up, the permission screen and settings. It is required by Apple, Google (Health Connect declaration and Data safety form) and most privacy laws.                                                                                                                             | Proposed |
-| `CON-6` | **Legal check before public beta:** health data is "special category" data under GDPR (explicit consent), and US state laws such as Washington's My Health My Data Act apply. Get a short legal review of the policy and consent wording before inviting testers outside your own circle. This may cost money, so it needs the owner's approval. | Decision needed |
+| `CON-6` | **Legal check:** health data is "special category" data under GDPR (explicit consent), and US state laws such as Washington's My Health My Data Act apply. A paid legal review of the privacy policy and consent wording is **not approved for now**. Until then, keep testing to the owner's own circle, avoid marketing to EU users, and revisit before any public launch. | **Deferred** by owner |
 
 ### 4.3 Deletion and export
 
@@ -167,7 +168,7 @@ types, or activity outside the competitions you joined.
 | `DEL-1` | **Delete account** (in-app; `ACC-7`): signs out everywhere immediately, and deletes the profile, friends, invitations, consents and **all** health rows within **30 days**, including backups as they rotate.                                                                                                                                  | Proposed        |
 | `DEL-2` | **Delete my health data** while keeping the account: removes all daily totals, source summaries and decisions. Competitions in progress then show your days as "no data".                                                                                                                                                                 | Proposed        |
 | `DEL-3` | **Leaving a competition** before the start deletes your membership and any data for it. After the start you are marked withdrawn (#2), and your health rows for it can be deleted with `DEL-2`.                                                                                                                                            | Proposed        |
-| `DEL-4` | **Effect on other players' results** after deletion: **(recommended)** in final competitions, keep your points and rank under the name "Former participant", with no health data, so other people's places don't change. In unfinished competitions, remove you entirely. Alternative: remove you from all results, which re-ranks others. | Decision needed |
+| `DEL-4` | **Effect on other players' results** after deletion: in **final** competitions, keep the deleted user's points and rank under the name **"Former participant"**, with no health data, so other people's places don't change. In unfinished competitions, remove them entirely. | **Approved** |
 | `DEL-5` | **Export my data** as a JSON file in the app (profile, competitions, goals, daily totals, consents).                                                                                                                                                                                                                                  | Proposed        |
 
 ---
@@ -211,7 +212,16 @@ The weak point is choosing the goal, not the formula.
 | **E. Clearer private advice**                                  | Narrow "near usual" from 80–120% to **90–110%**, and reword "above usual" to explain the trade-off ("a higher goal makes each point harder to earn").                                                                                                                                 | None                                                                           | Small: better self-awareness                                                                                       | Thresholds only (advisory, no score effect)                                             |
 | F. Hidden scoring floor _(not recommended)_                    | Score against max(goal, X% of usual) without telling the player.                                                                                                                                                                                                                 | None                                                                           | Partial                                                                                                            | Yes, and it's opaque. Rejected: it breaks "explain everything".                        |
 
-### Recommendation
+### Decision (owner, 2026-11-18): E + C + B, never penalizing limited history
+
+1. **E: clearer private advice.** The "near usual" band narrows to **90–110%** and the "above usual" advice is reworded. Advisory only; points unaffected.
+2. **C: "Usual-day goals" competition mode, the default** when creating a competition (#8). With **reliable history**, a player's goal is set to their own usual day (28-day median, rounded to 100 steps / 10 kcal). They may raise it but not lower it.
+3. **B: neutral goal labels** shown to all participants in "Choose your own goals" (casual) competitions.
+4. **No automatic penalty for limited history.** "Reliable history" means at least **14 valid days** in the last 28 (#2's "normal" sufficiency; missing days are never counted as zero). Anyone with less, including new users, a new phone, or a permission granted recently, **chooses their own goal** in either mode. The app suggests their usual day when it can estimate one. They are labelled neutrally as **"Limited history"**, never as below usual, and their points are calculated exactly like everyone else's. The 14-day threshold is configurable and can be raised (for example to 21) if testing shows it's too lenient.
+
+Implementation follows in separate issues: E in [#31](https://github.com/levitatedd/thoenefit-rivals/issues/31) (advisory bands and wording) and C + B in [#32](https://github.com/levitatedd/thoenefit-rivals/issues/32) (competition goal modes, with #8). The points formula and the 200-point cap stay as agreed in #2.
+
+### Original recommendation (for reference)
 
 1. **E now** (advisory wording and bands only; no effect on points).
 2. **C as a competition mode** in #8, chosen by the organizer: "Usual-day goals (fairest)" vs.
@@ -241,11 +251,11 @@ happens on one day, it is worth at most two "goal days".
 | `CHT-2` | **Back-dated or late uploads**                 | `receivedAt` is set by the **server**, never by the app. Uploads after `finalizesAt` are excluded (`LATE_SYNC`), so final results never change. Activity must have occurred inside the competition window.                                                                                                                          | Proposed |
 | `CHT-3` | **Manually entered activity and workouts**     | Excluded (`MANUAL_ENTRY`). Adapters map HealthKit `HKMetadataKeyWasUserEntered` and Health Connect `recordingMethod = MANUAL_ENTRY`. Workout totals are never added on top of daily totals (`DUPLICATE_ACTIVITY`). Tested per adapter (#4, #5).                                                                          | Proposed |
 | `CHT-4` | **Manipulated records** (apps writing fake steps, edited data) | Not preventable on the phone. Mitigations: prefer **platform de-duplicated daily totals**; accept only identifiable automatic sources; hold unknown sources and imports without app provenance (`UNKNOWN_SOURCE`); and the daily cap. Stated plainly in the rules screen.                                                            | Proposed |
-| `CHT-5` | **Implausible values**                         | **Hold** (not exclude) a day above a plausibility ceiling, so it doesn't count until it is resolved. Proposed ceilings: 100,000 steps/day or 5,000 active kcal/day. The owner sees a plain explanation and can re-sync. Held days are visible to the owner only.                                                                     | Decision needed |
+| `CHT-5` | **Implausible values**                         | **Hold** (not exclude) a day above a plausibility ceiling, so it doesn't count until it is resolved. Proposed ceilings: 100,000 steps/day or 5,000 active kcal/day. The owner sees a plain explanation and can re-sync. Held days are visible to the owner only.                                                                     | **Approved** |
 | `CHT-6` | **Duplicate data**                             | The engine's evidence-based de-duplication (#2), plus idempotent uploads (`DAT-2`). Phone and watch totals are never summed blindly.                                                                                                                                                                                                         | Implemented in engine; upload part proposed |
-| `CHT-7` | **Goal manipulation**                          | Goals lock server-side at the start (`CMP-3`). Easy goals: Section 5.                                                                                                                                                                                                                                                                     | Decision needed (Section 5) |
+| `CHT-7` | **Goal manipulation**                          | Goals lock server-side at the start (`CMP-3`). Easy goals: Section 5 (approved E + C + B).                                                                                                                                                                                                                                                                     | **Approved** (Section 5) |
 | `CHT-8` | **Tampering with other players' data**         | Row-level security: a user can only write their own uploads, only for competitions they joined, and only for metrics that competition uses.                                                                                                                                                                                                  | Proposed |
-| `CHT-9` | **Disputes**                                   | The server keeps an **audit log** of uploads (time, payload hash, source summary, decision) for 90 days, so the owner/support can explain a result. No automatic penalties or "cheater" labels.                                                                                                                                             | Proposed |
+| `CHT-9` | **Disputes**                                   | The server keeps an **audit log** of uploads (time, payload hash, source summary, decision; no health values) for 30 days, matching `DAT-5`, so the owner/support can explain a result. No automatic penalties or "cheater" labels.                                                                                                                                             | Proposed |
 
 **Not attempted in v1:** device attestation (App Attest / Play Integrity), anomaly-based
 penalties, and cross-checking against GPS. These can be added later without changing the
@@ -268,10 +278,10 @@ engine, because inputs, provenance, decisions and rule versions are already sepa
 - [ ] Backend and accounts (#7): `ACC-1`–`ACC-7`, `SEC-1`–`SEC-5`, `CMP-1` with authorization tests.
 - [ ] Server-authoritative scoring and server `receivedAt`: `CHT-1`, `CHT-2`, `CHT-8`.
 - [ ] Invitations: `INV-1`–`INV-6` (#8).
-- [ ] Consent, permissions, privacy policy: `CON-1`–`CON-5`; legal check `CON-6` (owner decision).
+- [ ] Consent, permissions, privacy policy: `CON-1`–`CON-5`. A legal review (`CON-6`) is deferred by the owner, so keep beta to the owner's own circle.
 - [ ] Deletion and export in the app: `DEL-1`–`DEL-5`.
 - [ ] App Store privacy details and the Google Play Data safety form / Health Connect declaration completed.
-- [ ] Easy-goal decision (Section 5) implemented.
+- [ ] Easy-goal decision (Section 5: E + C + B, limited history never penalized) implemented.
 - [ ] Age requirement (`ACC-3`) shown at sign-up.
 - [ ] Security review (`SEC-5`) done, and the dependency audit (#17) reviewed.
 
@@ -282,11 +292,11 @@ engine, because inputs, provenance, decisions and rule versions are already sepa
 | #   | Decision                                                                            | Status                    |
 | --- | ----------------------------------------------------------------------------------- | ------------------------- |
 | D1  | Trusted-friends model; no claims of verified effort (#2)                            | Agreed (#2)               |
-| D2  | Server-authoritative scoring; the app never submits scores (`CHT-1`)                | Proposed                  |
-| D3  | Store daily totals only; the 28-day history stays on the phone (Section 4.1)        | Proposed                  |
-| D4  | Easy goals: E now, C as the default competition mode, B in casual mode (Section 5)  | **Decision needed**       |
-| D5  | Health-data retention: 90 days after a competition is final (`DAT-5`)               | **Decision needed**       |
-| D6  | Deleted users in finished competitions shown as "Former participant" (`DEL-4`)      | **Decision needed**       |
-| D7  | Beta testers 18+ (`ACC-3`)                                                          | **Decision needed**       |
-| D8  | Plausibility ceilings hold, not exclude (`CHT-5`)                                   | **Decision needed**       |
-| D9  | Legal review of the privacy policy and consent before public beta (`CON-6`; may cost money) | **Decision needed** |
+| D2  | Server-authoritative scoring; the app never submits scores (`CHT-1`)                | Proposed (binding on merge) |
+| D3  | Store daily totals only; the 28-day history stays on the phone (Section 4.1)        | Proposed (binding on merge) |
+| D4  | Easy goals: E (clearer advice) + C (usual-day goals, default mode) + B (neutral labels in casual mode); players with limited history (< 14 valid days) are never penalized (Section 5) | **Approved** 2026-11-18 |
+| D5  | Health-data retention: **30 days** after a competition is final (`DAT-5`)          | **Approved** 2026-11-18   |
+| D6  | Deleted users in finished competitions shown as "Former participant" (`DEL-4`)     | **Approved** 2026-11-18   |
+| D7  | Beta testers 18+ (`ACC-3`)                                                         | **Approved** 2026-11-18   |
+| D8  | Plausibility ceilings hold, not exclude (`CHT-5`)                                  | **Approved** 2026-11-18   |
+| D9  | Paid legal review of the privacy policy and consent (`CON-6`)                      | **Deferred** (not approved for now); revisit before public launch |
