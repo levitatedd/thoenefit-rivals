@@ -16,7 +16,8 @@ export default function AboutScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: theme.background }}
-      contentContainerStyle={styles.scrollContent}>
+      contentContainerStyle={styles.scrollContent}
+      contentInsetAdjustmentBehavior="automatic">
       <View style={styles.column}>
         <ThemedText type="subtitle">ThoeneFit Rivals</ThemedText>
         <ThemedText themeColor="textSecondary">
