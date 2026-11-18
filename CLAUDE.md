@@ -5,6 +5,12 @@
 - Read [master backlog #1](https://github.com/levitatedd/thoenefit-rivals/issues/1) and the specific issue being worked on.
 - Never assume that the scoring formula or backend choice has been finalized.
 
+## Project tracking
+- GitHub Projects board: https://github.com/users/levitatedd/projects/4/views/1
+- Project status vocabulary: **Todo**, **In Progress**, **In Review**, **Done** (when configured). New entries should start in **Todo**.
+- The project auto-adds new open issues and pull requests; confirm actual board status before claiming it is updated.
+- Do not confuse the Project **Todo** status with the master backlog's **Next** priority section. Priority and work status are different.
+
 ## Issue and backlog workflow
 - #1 is the permanent master backlog. Never close or repurpose it.
 - Create a separate issue for each feature, bug, or chore; add it to #1 in the appropriate priority section.
