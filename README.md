@@ -30,6 +30,7 @@ Scan the QR code with Expo Go on your phone. Full steps: [docs/DEVELOPMENT.md](d
 - [Architecture](docs/ARCHITECTURE.md)
 - [Windows development](docs/DEVELOPMENT.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Dependency audit](docs/DEPENDENCY-AUDIT.md)
 - [Master backlog — Issue #1](https://github.com/levitatedd/thoenefit-rivals/issues/1)
 - [GitHub Projects board](https://github.com/users/levitatedd/projects/4/views/1)
 - [GitHub Issues](../../issues)

@@ -111,9 +111,9 @@ Individual commands: `npm run typecheck`, `npm run lint`, `npm test`, `npm run f
 - `react-dom` is pinned to the same version as `react` even though the app is native-only:
   `expo-router` depends on packages that peer-depend on it, and without the pin `npm ci` fails with a
   peer-dependency conflict.
-- `npm audit` reports advisories in Expo CLI / Metro build tooling (e.g. `glob`, `minimatch`,
-  `picomatch`). These run on the developer machine at build time and are not shipped in the app; do
-  not run `npm audit fix --force`, which breaks SDK alignment. They are resolved by Expo SDK updates.
+- `npm audit` reports advisories in build-time tooling only (Metro, Expo CLI, Jest, ESLint), not in the
+  shipped app. Do not run `npm audit fix --force`: it downgrades Expo and React Native. See
+  [DEPENDENCY-AUDIT.md](DEPENDENCY-AUDIT.md) for the full analysis and follow-up policy.
 
 ## Simulated data
 
