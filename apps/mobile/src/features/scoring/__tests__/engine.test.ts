@@ -327,36 +327,188 @@ describe('eligibility in scoring', () => {
     expect(ana.days[0].eligibleActivity).toBe(9000);
   });
 
-  it('never blindly sums phone + watch: overlapping samples resolve by source priority', () => {
-    const watch = sample('2026-11-02T14:00:00Z', '2026-11-02T15:00:00Z', 3000, { source: WATCH });
-    const phone = sample('2026-11-02T14:10:00Z', '2026-11-02T14:50:00Z', 2800, { source: PHONE });
-    const laterPhone = sample('2026-11-02T18:00:00Z', '2026-11-02T19:00:00Z', 1000, {
-      source: PHONE,
+  describe('duplicates need evidence; overlap alone holds instead of excluding', () => {
+    const IMPORT = {
+      kind: 'third-party-import' as const,
+      platform: 'healthkit' as const,
+      recordingMethod: 'automatic' as const,
+      appId: 'com.garmin.connect',
+    };
+
+    it('(a) confirmed duplicates: one activity via watch, phone and an import is counted once', () => {
+      const watch = sample('2026-11-02T14:00:00Z', '2026-11-02T15:00:00Z', 3000, {
+        source: WATCH,
+        activityId: 'walk-1',
+      });
+      const phone = sample('2026-11-02T14:02:00Z', '2026-11-02T14:58:00Z', 2900, {
+        source: PHONE,
+        activityId: 'walk-1',
+      });
+      const imported = sample('2026-11-02T14:00:00Z', '2026-11-02T15:00:00Z', 3010, {
+        source: IMPORT,
+        activityId: 'walk-1',
+      });
+      const ana = standing(
+        scoreCompetition(c(), [phone, imported, watch], allSynced('ana'), AFTER_FINAL),
+        'ana',
+      );
+      expect(ana.days[0].eligibleActivity).toBe(3000); // the watch copy (highest priority)
+      expect(ana.days[0].heldRecordIds).toEqual([]);
+      expect(ana.decisions.map((d) => [d.recordId, d.status, d.reason]).sort()).toEqual(
+        [
+          [phone.id, 'excluded', 'DUPLICATE_ACTIVITY'],
+          [imported.id, 'excluded', 'DUPLICATE_ACTIVITY'],
+        ].sort(),
+      );
     });
-    const ana = standing(
-      scoreCompetition(c(), [phone, watch, laterPhone], allSynced('ana'), AFTER_FINAL),
-      'ana',
-    );
-    expect(ana.days[0].eligibleActivity).toBe(4000); // watch 3000 + non-overlapping phone 1000
-    expect(ana.decisions).toEqual([
-      expect.objectContaining({ recordId: phone.id, reason: 'DUPLICATE_ACTIVITY' }),
-    ]);
+
+    it('(a) a platform-deduplicated daily total covers every source that day', () => {
+      const total = dayTotal('ana', day, 9000);
+      const watch = sample('2026-11-02T14:00:00Z', '2026-11-02T15:00:00Z', 3000, { source: WATCH });
+      const phone = sample('2026-11-02T14:00:00Z', '2026-11-02T15:00:00Z', 2800, { source: PHONE });
+      const ana = standing(
+        scoreCompetition(c(), [watch, phone, total], allSynced('ana'), AFTER_FINAL),
+        'ana',
+      );
+      expect(ana.days[0].eligibleActivity).toBe(9000);
+      expect(ana.decisions.every((d) => d.reason === 'DUPLICATE_ACTIVITY')).toBe(true);
+    });
+
+    it('(b) distinct activity with overlapping timestamps is held, not excluded, and unrelated activity counts', () => {
+      // A watch-tracked run and a phone-tracked walk with a partner overlap in time; nothing says
+      // they are the same activity.
+      const run = sample('2026-11-02T14:00:00Z', '2026-11-02T15:00:00Z', 6000, {
+        source: WATCH,
+        activityId: 'run-7',
+      });
+      const walk = sample('2026-11-02T14:30:00Z', '2026-11-02T15:30:00Z', 2500, {
+        source: PHONE,
+        activityId: 'walk-9',
+      });
+      const evening = sample('2026-11-02T23:00:00Z', '2026-11-02T23:30:00Z', 1000, {
+        source: PHONE,
+      });
+      const ana = standing(
+        scoreCompetition(c(), [walk, run, evening], allSynced('ana'), AFTER_FINAL),
+        'ana',
+      );
+      expect(ana.days[0].eligibleActivity).toBe(7000); // run + unrelated evening walk
+      expect(ana.days[0].heldRecordIds).toEqual([walk.id]);
+      expect(ana.decisions).toEqual([
+        expect.objectContaining({
+          recordId: walk.id,
+          status: 'held',
+          reason: 'OVERLAP_UNRESOLVED',
+        }),
+      ]);
+      expect(ana.decisions[0].explanation).toMatch(
+        /might be the same activity.*other activity still counts/,
+      );
+    });
+
+    it('(b) without identifiers, overlapping watch and phone samples hold the phone contribution', () => {
+      const watch = sample('2026-11-02T14:00:00Z', '2026-11-02T15:00:00Z', 3000, { source: WATCH });
+      const phone = sample('2026-11-02T14:10:00Z', '2026-11-02T14:50:00Z', 2800, { source: PHONE });
+      const laterPhone = sample('2026-11-02T18:00:00Z', '2026-11-02T19:00:00Z', 1000, {
+        source: PHONE,
+      });
+      const ana = standing(
+        scoreCompetition(c(), [phone, watch, laterPhone], allSynced('ana'), AFTER_FINAL),
+        'ana',
+      );
+      expect(ana.days[0].eligibleActivity).toBe(4000); // never phone + watch blindly summed
+      expect(ana.decisions).toEqual([
+        expect.objectContaining({
+          recordId: phone.id,
+          status: 'held',
+          reason: 'OVERLAP_UNRESOLVED',
+        }),
+      ]);
+    });
+
+    it('overlap within one source is not duplication; equal-priority sources keep one and hold the other', () => {
+      const sameA = sample('2026-11-02T14:00:00Z', '2026-11-02T15:00:00Z', 1000, { source: WATCH });
+      const sameB = sample('2026-11-02T14:30:00Z', '2026-11-02T15:30:00Z', 1500, { source: WATCH });
+      const phone1 = sample('2026-11-02T20:00:00Z', '2026-11-02T21:00:00Z', 700, { source: PHONE });
+      const phone2 = sample('2026-11-02T20:30:00Z', '2026-11-02T21:30:00Z', 900, {
+        source: { ...PHONE, deviceId: 'other-phone' },
+      });
+      const ana = standing(
+        scoreCompetition(c(), [phone2, sameA, sameB, phone1], allSynced('ana'), AFTER_FINAL),
+        'ana',
+      );
+      expect(ana.days[0].eligibleActivity).toBe(3200); // both watch samples + the earlier phone sample
+      expect(ana.days[0].heldRecordIds).toEqual([phone2.id]);
+    });
+
+    it('does not assume every daily total is de-duplicated: a single-source total gets no precedence', () => {
+      const phoneTotal = dayTotal('ana', day, 7000, {
+        source: PHONE,
+        aggregation: 'single-source',
+      });
+      const watch = sample('2026-11-02T14:00:00Z', '2026-11-02T15:00:00Z', 3000, { source: WATCH });
+      const ana = standing(
+        scoreCompetition(c(), [phoneTotal, watch], allSynced('ana'), AFTER_FINAL),
+        'ana',
+      );
+      // The phone's own all-day total overlaps the watch sample and may include the same steps.
+      expect(ana.days[0].eligibleActivity).toBe(3000);
+      expect(ana.days[0].heldRecordIds).toEqual([phoneTotal.id]);
+      // A total with no aggregation claim is treated the same way.
+      const unknownTotal = dayTotal('ana', day, 7000, { source: PHONE, aggregation: undefined });
+      const again = standing(
+        scoreCompetition(c(), [unknownTotal, watch], allSynced('ana'), AFTER_FINAL),
+        'ana',
+      );
+      expect(again.days[0].heldRecordIds).toEqual([unknownTotal.id]);
+    });
   });
 
-  it('overlap alone is not duplication within one source; equal-priority sources are held', () => {
-    const sameA = sample('2026-11-02T14:00:00Z', '2026-11-02T15:00:00Z', 1000, { source: WATCH });
-    const sameB = sample('2026-11-02T14:30:00Z', '2026-11-02T15:30:00Z', 1500, { source: WATCH });
-    const phone1 = sample('2026-11-02T20:00:00Z', '2026-11-02T21:00:00Z', 700, { source: PHONE });
-    const phone2 = sample('2026-11-02T20:30:00Z', '2026-11-02T21:30:00Z', 900, {
-      source: { ...PHONE, deviceId: 'other-phone' },
+  describe('records crossing a competition-day boundary (v1 limitation)', () => {
+    it('holds a sample spanning local midnight instead of guessing a split; other activity counts', () => {
+      // Chicago local: 23:30 on Mon 2 Nov → 00:30 on Tue 3 Nov.
+      const spanning = sample('2026-11-03T05:30:00Z', '2026-11-03T06:30:00Z', 1200);
+      const monday = sample('2026-11-02T18:00:00Z', '2026-11-02T19:00:00Z', 4000);
+      const endsAtMidnight = sample('2026-11-03T05:00:00Z', '2026-11-03T06:00:00Z', 800); // half-open: OK
+      const ana = standing(
+        scoreCompetition(c(), [spanning, monday, endsAtMidnight], allSynced('ana'), AFTER_FINAL),
+        'ana',
+      );
+      expect(ana.days[0].eligibleActivity).toBe(4800);
+      expect(ana.days[1].eligibleActivity).toBe(0);
+      expect(ana.days[0].heldRecordIds).toEqual([spanning.id]);
+      expect(ana.decisions).toEqual([
+        expect.objectContaining({
+          recordId: spanning.id,
+          status: 'held',
+          reason: 'SPANS_DAY_BOUNDARY',
+        }),
+      ]);
     });
-    const ana = standing(
-      scoreCompetition(c(), [sameA, sameB, phone1, phone2], allSynced('ana'), AFTER_FINAL),
-      'ana',
-    );
-    expect(ana.days[0].eligibleActivity).toBe(2500);
-    expect(ana.days[0].heldRecordIds.sort()).toEqual([phone1.id, phone2.id].sort());
-    expect(ana.decisions.every((d) => d.reason === 'OVERLAP_UNRESOLVED')).toBe(true);
+
+    it('holds records crossing the competition start or end, and excludes records fully outside', () => {
+      const crossesStart = sample('2026-11-02T05:00:00Z', '2026-11-02T07:00:00Z', 900); // 23:00 Sun → 01:00 Mon
+      const crossesEnd = sample('2026-11-09T05:00:00Z', '2026-11-09T07:00:00Z', 900); // 23:00 Sun 8 → 01:00 Mon 9
+      const before = sample('2026-11-02T04:00:00Z', '2026-11-02T06:00:00Z', 500); // ends exactly at the start
+      const after = sample('2026-11-09T06:00:00Z', '2026-11-09T07:00:00Z', 500); // starts exactly at the end
+      const result = scoreCompetition(
+        c(),
+        [crossesStart, crossesEnd, before, after],
+        allSynced('ana'),
+        AFTER_FINAL,
+      );
+      const ana = standing(result, 'ana');
+      expect(ana.totalPoints).toBe(0);
+      expect(ana.days[0].heldRecordIds).toEqual([crossesStart.id]);
+      expect(ana.days[6].heldRecordIds).toEqual([crossesEnd.id]);
+      const reasons = Object.fromEntries(ana.decisions.map((d) => [d.recordId, d.reason]));
+      expect(reasons).toEqual({
+        [crossesStart.id]: 'SPANS_DAY_BOUNDARY',
+        [crossesEnd.id]: 'SPANS_DAY_BOUNDARY',
+        [before.id]: 'OUTSIDE_COMPETITION',
+        [after.id]: 'OUTSIDE_COMPETITION',
+      });
+    });
   });
 
   it('rejects malformed records safely', () => {

@@ -28,6 +28,7 @@ export function rec(
     start: '2026-11-02T06:00:00Z', // 00:00 in America/Chicago (CST, UTC-6)
     end: '2026-11-03T06:00:00Z',
     type: 'daily-total',
+    aggregation: 'platform-deduplicated',
     source: WATCH,
     receivedAt: '2026-11-03T07:00:00Z',
     ...overrides,

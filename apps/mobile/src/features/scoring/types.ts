@@ -138,6 +138,20 @@ export interface ActivityRecord {
   end: Instant;
   type: RecordType;
   source: SourceProvenance;
+  /**
+   * Identifier of the underlying real-world activity, shared when the same activity reaches the
+   * health store through more than one source (e.g. a provider import that carries the original
+   * record's id). Records with the same `activityId` are confirmed duplicates. Adapters must only
+   * set this from real platform/provider identifiers, never infer it from overlapping times.
+   */
+  activityId?: string;
+  /**
+   * For `daily-total` records: whether the platform guarantees the total is de-duplicated across
+   * all sources (HealthKit statistics / Health Connect aggregate). Only `platform-deduplicated`
+   * totals override other records for the day; a `single-source` total (one app's own count) is
+   * treated like any other source's contribution.
+   */
+  aggregation?: 'platform-deduplicated' | 'single-source';
   /** When the app received/synced the record. Used for grace-period and finalization rules. */
   receivedAt: Instant;
 }
@@ -163,7 +177,8 @@ export type ReasonCode =
   | 'OUTSIDE_COMPETITION'
   | 'UNSUPPORTED_METRIC'
   | 'INVALID_RECORD'
-  | 'LATE_SYNC';
+  | 'LATE_SYNC'
+  | 'SPANS_DAY_BOUNDARY';
 
 export type EligibilityStatus = 'eligible' | 'excluded' | 'held';
 
