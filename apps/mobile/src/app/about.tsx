@@ -10,6 +10,8 @@ export default function AboutScreen() {
   const theme = useTheme();
   const source = useActivitySource();
   const version = Constants.expoConfig?.version ?? 'unknown';
+  const build = Constants.expoConfig?.extra?.buildNumber ?? '?';
+  const variant = Constants.expoConfig?.extra?.variant ?? 'development';
 
   return (
     <ScrollView
@@ -22,7 +24,8 @@ export default function AboutScreen() {
         </ThemedText>
 
         <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
-          <Row label="Version" value={version} />
+          <Row label="Version" value={`${version} (build ${build})`} />
+          <Row label="Channel" value={String(variant)} />
           <Row label="Data source" value={source.info.label} />
           <Row label="Stage" value="Pre-alpha preview" />
         </View>

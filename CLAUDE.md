@@ -22,7 +22,9 @@
 
 ## Branch and review policy
 - main = stable; staging = integration.
-- Create feature branches from staging and open PRs targeting staging.
+- Create short-lived branches from staging and open PRs targeting staging. Prefix = release-notes category: `feature/<issue>-…` (New), `improve/<issue>-…` (Improved), `fix/<issue>-…` (Fixed), `chore/<issue>-…` (tests, docs, CI, maintenance; omitted from user-facing notes). No other permanent branches.
+- PR titles are user-facing release-note lines: plain-language outcomes ("Add Step Battle daily scoring"), not commit-style prefixes. Use a single `category: …` label to override a wrongly named branch.
+- Versioning: the only version source is `apps/mobile/package.json`; never hand-edit versions or build numbers elsewhere. Bump only via `node .github/scripts/release/cli.js prepare` on a `chore/release-x.y.z` branch right before an owner-approved promotion; promotions into main use a merge commit. See docs/DEVELOPMENT.md → Versioning / Releases.
 - Do not push or merge to main without explicit user approval.
 - Report tests run, unresolved limitations, and the next recommended issue after each task.
 - Stop for approval before moving to another issue.
