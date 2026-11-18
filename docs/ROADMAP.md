@@ -1,6 +1,6 @@
 # Roadmap
 
-The canonical backlog is [GitHub Issues](../../issues). This document summarizes phases, not individual tasks.
+The canonical priorities are in [master backlog #1](https://github.com/levitatedd/thoenefit-rivals/issues/1), and work status is tracked on the [GitHub Projects board](https://github.com/users/levitatedd/projects/4/views/1). Individual tasks and resolution history live in [GitHub Issues](../../issues). This document summarizes phases, not individual tasks.
 
 ## Next
 
