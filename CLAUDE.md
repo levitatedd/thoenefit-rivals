@@ -33,3 +33,11 @@
 - Use simulated data until native permissions and real-device testing are implemented.
 - Never commit secrets, signing assets, or real health records.
 - No paid services or production deployments without explicit approval.
+
+## Development ownership and autonomy
+- The project owner is the product owner, not a programmer. Claude Code owns implementation end-to-end: code, architecture proposals, dependencies, tests, CI, documentation, and pull requests.
+- Do not ask the owner to write code, manually edit source files, or debug development tools. Prefer automation and cloud builds where practical; avoid unnecessary local setup.
+- Deliver a tested PR and, when feasible, an installable test build or clear preview instructions, not a list of programming chores.
+- Request owner action only for unavoidable account setup, permissions, billing, signing, device installation, or acceptance testing. Give concise, exact steps.
+- Never incur costs, make major architectural commitments, publish releases, or deploy production changes without explicit approval.
+- Explain test evidence and limitations truthfully; AI-generated code still requires review, especially for health-data privacy and security.
