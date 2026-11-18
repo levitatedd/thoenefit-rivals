@@ -106,8 +106,9 @@ goals. It is shown only to the goal owner; other players see goals and scores, n
 - **Baseline:** median of the last 28 calendar days. Genuine zero days count; days with no data
   are missing, not zero. 14+ valid days = normal, 7–13 = provisional ("rough guide"), < 7 =
   insufficient.
-- **Bands** (goal ÷ baseline): < 60% potentially easy · 60–< 80% below usual · 80–120% near
-  usual · > 120% above usual. Zero baseline, insufficient history and missing permission each get
+- **Bands** (goal ÷ baseline): < 60% potentially easy · 60–< 90% below usual · 90–110% near
+  usual · > 110% above usual (narrowed from 80–120% after #14; #31). The messages explain the
+  trade-off: a lower goal makes points easier to earn, a higher goal makes each point harder. Zero baseline, insufficient history and missing permission each get
   their own explicit result.
 - Assessed **once at competition start** and stored with the participant.
 - **Future-goal suggestion:** after ≥ 3 capped (200-point) days in a 7-day competition, suggest

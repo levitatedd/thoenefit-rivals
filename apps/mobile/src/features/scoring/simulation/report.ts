@@ -79,7 +79,7 @@ export function renderReport(): string {
     '- "Goal factor" = personal goal ÷ the player’s typical day (1.0 = honest, 0.5 = half their usual day).',
   );
   w(
-    `- Fairness advice uses each player’s synthetic 28-day history and the configured bands: < ${F.potentiallyEasyBelow * 100}% potentially easy, < ${F.belowUsualBelow * 100}% below usual, ≤ ${F.aboveUsualAbove * 100}% near usual, above that above usual.`,
+    `- Fairness advice uses each player’s synthetic 28-day history and the configured bands: < ${Math.round(F.potentiallyEasyBelow * 100)}% potentially easy, < ${Math.round(F.belowUsualBelow * 100)}% below usual, ≤ ${Math.round(F.aboveUsualAbove * 100)}% near usual, above that above usual.`,
   );
   w('- "Win share" counts a shared first place as a fraction of a win, so shares add up to 100%.');
   w();
@@ -157,10 +157,10 @@ export function renderReport(): string {
     `- **Easy goals dominate.** At half their usual day a player wins ${pct(at(0.5, 1).winShare)} of 1-day and ${pct(at(0.5, 7).winShare)} of 7-day competitions against honest peers. The private warning fires ("potentially easy"), but by design it never affects points, so it does not change the outcome. The 200-point cap limits the advantage per day but does not neutralise it.`,
   );
   w(
-    `- **The "near usual" band (80–120%) is wide.** A goal at 85% of a typical day is labelled *near usual* in most runs, yet wins ${pct(at(0.85, 7).winShare)} of 7-day competitions — about ${(at(0.85, 7).winShare / 0.25).toFixed(1)}× a fair share.`,
+    `- **Modestly easy goals still win often.** A goal at 85% of a typical day wins ${pct(at(0.85, 7).winShare)} of 7-day competitions — about ${(at(0.85, 7).winShare / 0.25).toFixed(1)}× a fair share. With the original 80–120% "near usual" band it was labelled *near usual*; the band is now ${Math.round(F.belowUsualBelow * 100)}–${Math.round(F.aboveUsualAbove * 100)}% (#31), so it is flagged *below usual* in ${pct(at(0.85, 7).fairnessBands['below-usual'] ?? 0)} of runs.`,
   );
   w(
-    `- **Ambitious goals are punished.** At 130% a player wins only ${pct(at(1.3, 7).winShare)} of 7-day competitions, while the advice reads like praise ("Nice ambition!").`,
+    `- **Ambitious goals rarely win.** At 130% a player wins only ${pct(at(1.3, 7).winShare)} of 7-day competitions. The private advice now explains that a higher goal makes each point harder to earn (#31).`,
   );
   w(
     `- **The future-goal suggestion** (≥ 3 capped days in 7) catches very easy goals (${pct(at(0.5, 7).suggestionRate)} of 7-day competitions at 0.5) but almost never moderately easy ones (${pct(at(0.7, 7).suggestionRate)} at 0.7).`,
@@ -228,33 +228,22 @@ export function renderReport(): string {
   w();
 
   // ------------------------------------------------------------------ recommendations
-  w('## Recommendations for owner review');
+  w('## Decisions');
   w();
   w(
-    'Nothing below has been implemented. The scoring formula and thresholds are unchanged pending your decision.',
+    'The owner reviewed these findings in #10 (`docs/PRIVACY-SECURITY.md`, decision D4). The points formula and the 200-point cap are unchanged.',
   );
   w();
   w(
-    '1. **Keep the core formula.** Goal-relative points with a per-day cap levels fitness differences, rewards consistency, limits outlier days and still allows comebacks.',
+    '1. **Keep the core formula.** Goal-relative points with a per-day cap level fitness differences, reward consistency, limit outlier days and still allow comebacks.',
   );
   w(
-    '2. **Easy goals are the main fairness risk.** Options (choose any, or none for a trusted-friends v1):',
+    `2. **Clearer private advice (done, #31):** "near usual" is now ${Math.round(F.belowUsualBelow * 100)}–${Math.round(F.aboveUsualAbove * 100)}%, and the advice explains that lower goals make points easier and higher goals make them harder.`,
   );
   w(
-    '   - a. Show opponents a neutral goal indicator (e.g. "goal set below usual") with the owner’s opt-in, as #2 already allows.',
+    '3. **Usual-day goals as the default competition mode, with neutral goal labels in casual mode (planned, #32):** goals start at each player’s own usual day and can only be raised; players with limited history choose their own goal and are never penalized.',
   );
-  w(
-    '   - b. Let competition creators require a minimum goal relative to each player’s own baseline (e.g. ≥ 80%) — advisory today, optional rule later.',
-  );
-  w(
-    `   - c. Narrow the "near usual" band (currently ${F.belowUsualBelow * 100}–${F.aboveUsualAbove * 100}%), e.g. to 90–110%, so modestly easy goals are flagged.`,
-  );
-  w(
-    '3. **Reword the above-usual advice** so it also explains the trade-off ("a higher goal makes each point harder to earn"), since ambitious goals strongly reduce the chance of winning.',
-  );
-  w(
-    '4. **Ties in short competitions:** keep shared places (as agreed), and have the leaderboard (#3) explain ties clearly; optionally show raw activity as context without using it to rank.',
-  );
+  w('4. **Ties:** shared places stay, and the leaderboard explains them (done, #3).');
   w(
     '5. **Validate with real data later:** these simulations assume ±30% daily variation for everyone; real variability differs by person and device. Re-run with real (consented) aggregates when health integrations exist.',
   );

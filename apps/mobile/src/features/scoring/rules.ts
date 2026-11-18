@@ -27,8 +27,11 @@ export const RULES_V1: Readonly<ScoringRules> = Object.freeze({
     normalMinValidDays: 14, // proposed
     provisionalMinValidDays: 7, // proposed
     potentiallyEasyBelow: 0.6, // proposed
-    belowUsualBelow: 0.8, // proposed
-    aboveUsualAbove: 1.2, // proposed
+    // "Near usual" is 90–110% (narrowed from 80–120% after #14; owner decision D4/E, #31).
+    // Advisory only: every competition stores its own copy of these rules, so earlier
+    // competitions keep the bands they started with.
+    belowUsualBelow: 0.9,
+    aboveUsualAbove: 1.1,
   }),
   capSuggestion: Object.freeze({
     capDayRatio: 3 / 7, // proposed: 3 capped days in a 7-day competition

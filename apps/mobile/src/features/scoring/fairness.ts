@@ -48,10 +48,12 @@ export function computeBaseline(
 
 const MESSAGES: Record<FairnessAssessment['band'], string> = {
   'potentially-easy':
-    'Your goal is well below what you usually do. You can keep it, but your competitors can see it.',
-  'below-usual': 'Your goal is a bit below what you usually do.',
-  'near-usual': 'Your goal is close to what you usually do.',
-  'above-usual': 'Your goal is above what you usually do. Nice ambition!',
+    'Your goal is well below your usual day, so points will come much more easily for you than for players whose goals match their usual day. You can keep it; other players can see your goal.',
+  'below-usual':
+    'Your goal is a bit below your usual day, so points will come a little more easily for you than for players whose goals match their usual day.',
+  'near-usual': 'Your goal is close to your usual day.',
+  'above-usual':
+    'Your goal is above your usual day. A higher goal makes each point harder to earn, so it’s a real challenge in a competition.',
   'zero-baseline':
     'Your recent history shows no activity for this metric, so we can’t compare your goal.',
   'insufficient-history': 'There isn’t enough recent history yet to compare your goal.',

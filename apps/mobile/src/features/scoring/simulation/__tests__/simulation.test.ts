@@ -107,10 +107,16 @@ describe('goal ambition (fairness warnings are advisory only)', () => {
     expect(tested.suggestionRate).toBeGreaterThan(0.4); // private future-goal suggestions fire
   });
 
-  it('a modestly easy goal (85%) is still labelled near-usual but wins well above a fair share', () => {
+  it('a modestly easy goal (85%) wins well above a fair share and is now flagged below usual (#31)', () => {
     const tested = statsOf(goalAmbition(0.85, 7, RUNS), 'tested');
-    expect(tested.fairnessBands['near-usual']).toBeGreaterThan(0.8);
+    expect(tested.fairnessBands['below-usual']).toBeGreaterThan(0.4); // ~57%: 85% sits near the 90% line once baseline noise is included
     expect(tested.winShare).toBeGreaterThan(0.5);
+  });
+
+  it('an honest goal is still labelled near usual with the narrower band', () => {
+    expect(statsOf(goalAmbition(1, 7, RUNS), 'tested').fairnessBands['near-usual']).toBeGreaterThan(
+      0.6,
+    );
   });
 
   it('an honest goal wins about a fair share; an ambitious goal (130%) rarely wins', () => {
