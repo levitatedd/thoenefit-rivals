@@ -25,7 +25,8 @@ export default function ScoringScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: theme.background }}
-      contentContainerStyle={styles.scrollContent}>
+      contentContainerStyle={styles.scrollContent}
+      contentInsetAdjustmentBehavior="automatic">
       <View style={styles.column}>
         {world.usesDemoSettings && <DemoSettingsBadge />}
         <Card>
