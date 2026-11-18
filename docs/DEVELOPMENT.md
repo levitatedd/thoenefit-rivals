@@ -118,7 +118,7 @@ cached by a hash of the app's sources (re-running with no app changes skips the 
 uses the open-source `basic` GitHub Actions cache provider, and the emulator image plus a booted
 snapshot are cached. GitHub caches are scoped per branch, so the **first** run on a PR is cold
 (measured 28.6 min) and later runs on the same PR are warm: **3.4 min** when the app is
-unchanged (build skipped, emulator warm-boots), and RUN_C_PLACEHOLDER when app code changed
+unchanged (build skipped, emulator warm-boots), and **11.4 min** when app code changed
 (Gradle cache restored, emulator warm-boots). To force a fresh emulator
 cache, bump `AVD_CACHE_VERSION` in the workflow.
 
