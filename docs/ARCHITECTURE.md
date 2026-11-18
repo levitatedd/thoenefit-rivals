@@ -4,7 +4,7 @@
 
 - Mobile: Expo SDK 58 / React Native 0.88 with TypeScript and Expo Router in `apps/mobile` (implemented, #15). Development builds will be needed for native integrations.
 - Health-data boundary: adapters implement `ActivityDataSource` and emit normalized `DailyActivitySummary` records (`apps/mobile/src/features/activity`). Only a simulated adapter exists today.
-- Scoring: pure TypeScript package with deterministic unit tests and versioned competition rules.
+- Scoring: pure TypeScript engine in `apps/mobile/src/features/scoring` (implemented, #2): versioned rules, locked goal snapshots, per-day 200-point cap, source-aware eligibility, provisional/grace/final phases, private fairness guidance. Spec: [SCORING.md](SCORING.md).
 - Backend: Supabase is the initial candidate for authentication, PostgreSQL, and access control; evaluate before committing.
 - iOS: HealthKit via an audited native bridge. Apple Watch data normally syncs through the paired iPhone.
 - Android: Health Connect via native bridge. Availability of calories and steps depends on device, source app, permissions, and sync.
