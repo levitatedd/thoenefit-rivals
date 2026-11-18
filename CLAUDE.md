@@ -26,6 +26,11 @@
 - Report tests run, unresolved limitations, and the next recommended issue after each task.
 - Stop for approval before moving to another issue.
 
+## Mobile app commands
+- App: `apps/mobile`. Install with `npm ci`; run `npm run check` (typecheck, lint, format, tests) before every PR.
+- Add native packages with `npx expo install <package>`; dependency versions are pinned exactly.
+- See `apps/mobile/AGENTS.md` for Expo-specific guidance.
+
 ## Engineering principles
 - Windows-first React Native / Expo / TypeScript.
 - Separate health data adapters from scoring and leaderboard logic.
