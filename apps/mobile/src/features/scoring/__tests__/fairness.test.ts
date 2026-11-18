@@ -44,10 +44,10 @@ describe('goal fairness advisory', () => {
   it.each([
     [5999, 'potentially-easy'],
     [6000, 'below-usual'], // 60% is the first "below usual" value
-    [7999, 'below-usual'],
-    [8000, 'near-usual'], // 80–120% inclusive is "near usual"
-    [12000, 'near-usual'],
-    [12001, 'above-usual'],
+    [8999, 'below-usual'],
+    [9000, 'near-usual'], // 90–110% inclusive is "near usual" (#31)
+    [11000, 'near-usual'],
+    [11001, 'above-usual'],
   ])('goal %p against a 10,000 baseline is %p', (goal, band) => {
     expect(assessGoal(goal, h, F).band).toBe(band);
   });
@@ -56,6 +56,13 @@ describe('goal fairness advisory', () => {
     expect(assessGoal(5000, history(20, 0), F).band).toBe('zero-baseline');
     expect(assessGoal(5000, history(6, 10000), F).band).toBe('insufficient-history');
     expect(assessGoal(5000, history(20, 10000), F, 'revoked').band).toBe('unavailable');
+  });
+
+  it('explains what a goal below or above the usual day means for points (#31)', () => {
+    expect(assessGoal(8500, h, F).message).toMatch(/points will come a little more easily/);
+    expect(assessGoal(12000, h, F).message).toMatch(/harder to earn/);
+    expect(assessGoal(12000, h, F).message).not.toMatch(/Nice ambition/);
+    expect(assessGoal(10000, h, F).message).toBe('Your goal is close to your usual day.');
   });
 
   it('marks provisional advice and words messages neutrally', () => {
