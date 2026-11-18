@@ -13,6 +13,7 @@ name: Android emulator smoke test
 #   on PR branches too;
 # - the AVD, its system image and a booted snapshot are cached, so later runs warm-boot.
 # Caches are scoped per branch: the first run on a PR is cold, later runs on it are warm.
+# Measured on PR #20: cold 28.6 min; unchanged app 3.4 min (see docs/DEVELOPMENT.md).
 
 on:
   pull_request:
