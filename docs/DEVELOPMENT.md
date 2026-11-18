@@ -111,7 +111,14 @@ Workflows live in `.github/workflows/`. Third-party actions are pinned to exact 
 | --- | --- | --- |
 | **CI** (`ci.yml`) | PRs into `staging`/`main`; pushes to `staging`/`main` | **Mobile checks (Linux)**: `npm ci`, typecheck, lint, format check, Jest, Android + iOS bundle build, automation-script tests. **Mobile checks (Windows)** (PRs only): `npm ci` + `npm run check` on Windows. **Dependency audit**: posts all `npm audit` advisories to the run summary and fails only on **critical**. **Project board (In Review)**: see below. |
 | **Project board status** (`project-status.yml`) | Issue label/reopen/close; PR closed or converted to draft | Board transitions and closing issues when a PR merges into `staging`. |
-| **Android emulator smoke test** (`android-smoke.yml`) | Opt-in: add the `android-smoke` label to a PR | Builds a standalone Android APK, launches it on an emulator (API 35), checks the simulated dashboard with steps and active energy appears, uploads a screenshot + logs as the `android-smoke-results` artifact. ~20–30 min. |
+| **Android emulator smoke test** (`android-smoke.yml`) | Opt-in: add the `android-smoke` label to a PR | Builds a standalone Android APK, launches it on an emulator (API 35), checks the simulated dashboard with steps and active energy appears, uploads a screenshot + logs as the `android-smoke-results` artifact. Unrelated emulator system dialogs (e.g. "Pixel Launcher isn't responding") are dismissed; a dialog about this app fails the test. Timing: see below. |
+
+**Android smoke test caching (#19).** The build and the emulator run in separate jobs. The APK is
+cached by a hash of the app's sources (re-running with no app changes skips the build), Gradle state
+uses the open-source `basic` GitHub Actions cache provider, and the emulator image plus a booted
+snapshot are cached. GitHub caches are scoped per branch, so the **first** run on a PR is cold
+(~25–30 min) and later runs on the same PR are warm (TIMING_PLACEHOLDER). To force a fresh emulator
+cache, bump `AVD_CACHE_VERSION` in the workflow.
 
 **Actions minutes:** this repository is private, so runs use the account's monthly free minutes
 (Windows minutes count double). With GitHub's default $0 spending limit, running out pauses

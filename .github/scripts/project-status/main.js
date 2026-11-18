@@ -7,7 +7,14 @@
 
 'use strict';
 
-const { STATUS, IN_PROGRESS_LABEL, parseLinkedIssues, decideStatus, shouldCloseIssueOnMerge } = require('./rules');
+const {
+  STATUS,
+  IN_PROGRESS_LABEL,
+  parseLinkedIssues,
+  decideStatus,
+  shouldCloseIssueOnMerge,
+  shouldRemoveInProgressLabel,
+} = require('./rules');
 const { withRetry, loadProject, getIssueItem, addIssueToProject, setItemStatus } = require('./project');
 
 /** Turns the GitHub event into one normalized event per affected issue. */
@@ -124,6 +131,16 @@ module.exports = async function run({ github, context, core, getOctokit, checksR
       } catch (error) {
         core.error(`Could not close issue #${target.number}: ${error.message}`);
         failed = true;
+      }
+    }
+
+    // A closed issue is no longer "in progress"; drop the label so it doesn't go stale.
+    if (shouldRemoveInProgressLabel(target.event)) {
+      try {
+        await github.rest.issues.removeLabel({ ...context.repo, issue_number: target.number, name: IN_PROGRESS_LABEL });
+        log(`Removed "${IN_PROGRESS_LABEL}" label from #${target.number}.`);
+      } catch (error) {
+        if (error.status !== 404) core.warning(`Could not remove label from #${target.number}: ${error.message}`);
       }
     }
 
