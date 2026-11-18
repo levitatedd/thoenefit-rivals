@@ -3,12 +3,12 @@
 # simulated-data dashboard renders. Used by .github/workflows/android-smoke.yml.
 set -euo pipefail
 
-APP_DIR="apps/mobile/android"
-APK="$APP_DIR/app/build/outputs/apk/release/app-release.apk"
+# Set by the workflow's "Keep the APK" step.
+APK="${APK_PATH:?APK_PATH not set}"
+PACKAGE="${APP_PACKAGE:?APP_PACKAGE not set}"
 OUT="smoke-output"
 mkdir -p "$OUT"
-
-PACKAGE=$(grep -oE "applicationId ['\"][^'\"]+['\"]" "$APP_DIR/app/build.gradle" | head -1 | sed -E "s/applicationId ['\"]([^'\"]+)['\"]/\1/")
+echo "APK: $APK"
 echo "Package: $PACKAGE"
 
 adb wait-for-device
