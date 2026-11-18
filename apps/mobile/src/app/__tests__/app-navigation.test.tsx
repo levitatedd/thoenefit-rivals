@@ -137,4 +137,29 @@ describe('demo app (real layouts, simulated data, real scoring engine)', () => {
       within(screen.getByRole('button', { name: /: Alex,/ })).queryByText(/waiting for sync/),
     ).toBeNull();
   });
+
+  it('shows goal modes and neutral goal labels on the leaderboard (#32)', async () => {
+    await renderApp('/competition/demo-step-battle');
+    expect(await screen.findByText('Usual-day goals')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /: Maya, .*limited history/ })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /: You, .*usual day/ })).toBeOnTheScreen();
+    expect(
+      screen.getByText(/can only be raised, so nobody can win with an easy goal/),
+    ).toBeOnTheScreen();
+  });
+
+  it('explains your own goal privately (#32)', async () => {
+    await renderApp('/competition/demo-step-battle/you');
+    expect(await screen.findByText(/Your goal is your usual day/)).toBeOnTheScreen();
+  });
+
+  it('demo controls: usual-day goals can only be raised until the mode is switched (#32)', async () => {
+    await renderApp('/demo');
+    const decrease = await screen.findByRole('button', { name: 'Decrease your Step Battle goal' });
+    expect(decrease).toBeDisabled();
+    await userEvent.press(
+      screen.getByRole('radio', { name: 'Step Battle: Choose-your-own goals' }),
+    );
+    expect(screen.getByRole('button', { name: 'Decrease your Step Battle goal' })).toBeEnabled();
+  });
 });

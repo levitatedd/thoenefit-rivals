@@ -219,7 +219,7 @@ The weak point is choosing the goal, not the formula.
 3. **B: neutral goal labels** shown to all participants in "Choose your own goals" (casual) competitions.
 4. **No automatic penalty for limited history.** "Reliable history" means at least **14 valid days** in the last 28 (#2's "normal" sufficiency; missing days are never counted as zero). Anyone with less, including new users, a new phone, or a permission granted recently, **chooses their own goal** in either mode. The app suggests their usual day when it can estimate one. They are labelled neutrally as **"Limited history"**, never as below usual, and their points are calculated exactly like everyone else's. The 14-day threshold is configurable and can be raised (for example to 21) if testing shows it's too lenient.
 
-Implementation follows in separate issues: E in [#31](https://github.com/levitatedd/thoenefit-rivals/issues/31) (advisory bands and wording) and C + B in [#32](https://github.com/levitatedd/thoenefit-rivals/issues/32) (competition goal modes, with #8). The points formula and the 200-point cap stay as agreed in #2.
+Implementation follows in separate issues: E in [#31](https://github.com/levitatedd/thoenefit-rivals/issues/31) (advisory bands and wording) and C + B in [#32](https://github.com/levitatedd/thoenefit-rivals/issues/32) (competition goal modes: engine, simulation and demo done; the creation and join screens come with #8). Details: [SCORING.md → Goal modes](SCORING.md#goal-modes-32). The points formula and the 200-point cap stay as agreed in #2.
 
 ### Original recommendation (for reference)
 

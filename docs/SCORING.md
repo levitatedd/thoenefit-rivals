@@ -118,6 +118,33 @@ goals. It is shown only to the goal owner; other players see goals and scores, n
 All "proposed" thresholds live in `RULES_V1` (`rules.ts`) and are meant to be tuned through
 playtesting. Simulation results and recommendations: [SCORING-VALIDATION.md](SCORING-VALIDATION.md) (#14).
 
+## Goal modes (#32)
+
+Every competition has a **goal mode**, locked at the start like the rules. Points are calculated
+exactly the same way in both modes; only how goals may be set, and the neutral label others see,
+differ (owner decision D4 in [PRIVACY-SECURITY.md](PRIVACY-SECURITY.md#5-easy-goals-options-for-a-decision)).
+
+| Mode                                            | Goals                                                                                                                                                         | Others see                                                       |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Usual-day** (`usual-day`, default for new competitions in #8) | With **reliable history**, the goal is at least the player's **usual day** (28-day median, rounded to 100 steps / 10 kcal). It can be raised, never lowered: `startCompetition` rejects a lower goal. | "usual day" or "above usual" (raised)                            |
+| **Choose your own** (`choose-own`, casual)      | Any valid goal.                                                                                                                                               | A neutral label from the private band: "near usual", "below usual" (incl. potentially easy), "above usual" |
+
+- **Reliable history** = at least `goalModes.usualDayMinValidDays` (14) valid days in the last 28,
+  permission granted and a non-zero median. Missing days are never counted as zero.
+- **Limited history is never penalized:** anyone without reliable history (new users, a new
+  phone, permission granted recently, 7–13 "provisional" days) chooses their own goal in either
+  mode and is labelled **"limited history"**, never "below usual".
+- `toPublicStandings` adds `goalLabel`; it never exposes the usual day, the band, the history or
+  the private advice. Each participant's `goalBasis` (`usual-day`, `raised`, `limited-history`,
+  `own-choice`) and `usualDayGoal` stay private.
+- The engine default is `choose-own`, so existing callers keep v1 behaviour; the competition
+  creation flow (#8) defaults to usual-day.
+- Simulation (#14 simulator, 400 runs): a player who asks for half their usual day wins **100%**
+  of 7-day competitions against honest peers in casual mode, and **21.5%** (fair = 25%) in
+  usual-day mode where everyone takes the default. Note: the usual day is a median, which for
+  activity is a little below the average day, so a goal set at your *average* day counts as
+  slightly raised.
+
 ## API
 
 ```ts

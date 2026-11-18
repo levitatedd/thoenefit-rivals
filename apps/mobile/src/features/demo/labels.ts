@@ -53,10 +53,10 @@ export function progressLabel(competition: DemoCompetition): string {
 
 /** Neutral wording for the public goal label (#32). Never numbers or history. */
 export const GOAL_LABELS: Record<PublicGoalLabel, string> = {
-  'usual-day': 'usual-day goal',
-  'near-usual': 'goal near usual',
-  'below-usual': 'goal below usual',
-  'above-usual': 'goal above usual',
+  'usual-day': 'usual day',
+  'near-usual': 'near usual',
+  'below-usual': 'below usual',
+  'above-usual': 'above usual',
   'limited-history': 'limited history',
 };
 
