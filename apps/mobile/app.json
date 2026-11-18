@@ -2,7 +2,6 @@
   "expo": {
     "name": "ThoeneFit Rivals",
     "slug": "thoenefit-rivals",
-    "version": "0.1.0",
     "platforms": ["ios", "android"],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

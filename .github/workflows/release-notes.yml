@@ -1,0 +1,46 @@
+name: Release notes
+
+# PRs into staging: preview the categorised notes for everything merged into staging but not yet
+# on main (informational).
+# Promotion PRs into main: same preview, plus a blocking check that the version was bumped as
+# the changes require and CHANGELOG.md has the entry. See docs/DEVELOPMENT.md → "Releases".
+
+on:
+  pull_request:
+    branches: [staging, main]
+    types: [opened, synchronize, reopened, ready_for_review, edited, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: release-notes-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  notes:
+    name: Release notes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Preview release notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # For a promotion PR the release head is the PR head (staging); otherwise preview staging.
+          HEAD_REF: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.sha || 'origin/staging' }}
+        run: node .github/scripts/release/cli.js notes --base origin/main --head "$HEAD_REF"
+
+      - name: Check version and changelog (promotion PRs only)
+        if: github.event.pull_request.base.ref == 'main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/release/cli.js check --base origin/main --head "${{ github.event.pull_request.head.sha }}"

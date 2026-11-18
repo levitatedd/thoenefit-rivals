@@ -12,12 +12,22 @@ and approving. These conventions keep the work traceable.
 
 ## Branches
 
-| Branch                         | Purpose                                                    |
-| ------------------------------ | ---------------------------------------------------------- |
-| `main`                         | Stable, reviewed releases. Changes only by promotion PR.   |
-| `staging`                      | Integration and testing. All feature PRs target this.      |
-| `feature/<issue>-short-name`   | One issue's work, branched from `staging`.                 |
-| `fix/<issue>-short-name`       | Bug fixes, same rules as features.                         |
+Two permanent branches; everything else is a short-lived branch **created from `staging`** with a
+PR **into `staging`**. The prefix decides how the change appears in the release notes.
+
+| Branch                          | Purpose / release-notes category                                              |
+| ------------------------------- | ----------------------------------------------------------------------------- |
+| `main`                          | Stable, reviewed releases. Changes only by an owner-approved promotion PR.    |
+| `staging`                       | Integration and testing. All work PRs target this.                            |
+| `feature/<issue>-short-name`    | **New** — a new user-facing capability.                                       |
+| `improve/<issue>-short-name`    | **Improved** — polish or enhancement of something that already exists.        |
+| `fix/<issue>-short-name`        | **Fixed** — a bug fix.                                                        |
+| `chore/<issue>-short-name`      | Omitted from user-facing notes — tests, docs, CI, tooling, maintenance.       |
+
+Examples: `feature/2-scoring-engine`, `improve/3-leaderboard-ties`, `fix/41-dst-day-boundary`,
+`chore/22-versioning-changelog`. If a branch was named wrongly, add one label
+`category: new`, `category: improved`, `category: fixed` or `category: chore` to the PR instead
+of renaming it.
 
 ## Commits
 
@@ -27,7 +37,10 @@ Use short, imperative [Conventional Commit](https://www.conventionalcommits.org/
 
 ## Pull requests
 
-1. Open a PR from the feature branch into `staging`, filling in the PR template.
+1. Open a PR from the work branch into `staging`, filling in the PR template. **The PR title is
+   the line users read in What's New**: write it as a plain-language outcome
+   ("Add Step Battle daily scoring", "Fix steps counted twice after sync"), not as a commit
+   message ("feat(scoring): …"). Issue links are added to the notes automatically.
 2. Link the issue in the description: `Closes #N` (merge completes the issue) or `Refs #N`
    (related, stays open).
 3. CI must be green: Linux checks, Windows checks, dependency audit. If a check cannot run,
@@ -50,7 +63,8 @@ Details, limitations, and one-time setup: [docs/DEVELOPMENT.md](docs/DEVELOPMENT
 ## Releases (`staging` → `main`)
 
 Only with explicit owner approval, using the checklist and release summary in
-[docs/RELEASING.md](docs/RELEASING.md).
+[docs/RELEASING.md](docs/RELEASING.md). Versions and the changelog are prepared by tooling, not by
+hand; see [docs/DEVELOPMENT.md → Versioning and Releases](docs/DEVELOPMENT.md#versioning).
 
 ## Never commit
 

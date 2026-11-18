@@ -247,8 +247,78 @@ signing and external beta distribution may require Apple Developer Program enrol
 
 ## Branches
 
-Create feature branches from `staging` (`feature/<issue>-short-name`), open PRs back into `staging`,
-run tests, and promote tested work to `main` through a separate PR.
+Permanent: `main` (stable releases) and `staging` (integration). All work happens on a short-lived
+branch created from `staging`, merged back by PR into `staging`. The prefix is the release-notes
+category:
+
+| Prefix      | Category in release notes | Use for                                         |
+| ----------- | ------------------------- | ----------------------------------------------- |
+| `feature/`  | **New**                   | New user-facing capability                      |
+| `improve/`  | **Improved**              | Polish or enhancement of existing functionality |
+| `fix/`      | **Fixed**                 | Bug fixes                                       |
+| `chore/`    | _omitted_                 | Tests, docs, CI, tooling, maintenance           |
+
+Name branches `<prefix>/<issue>-short-description`, e.g. `feature/2-scoring-engine`. A single
+`category: new|improved|fixed|chore` label on the PR overrides the prefix. Write PR titles as the
+plain-language line a user would read in What's New. Details: [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+## Versioning
+
+**One source of truth:** `apps/mobile/package.json` → `"version"` (SemVer `MAJOR.MINOR.PATCH`,
+currently pre-1.0, started at `0.1.0`). `apps/mobile/app.config.js` passes it to Expo; `app.json`
+has no version. Never edit the version by hand in several places — use the release tooling below.
+
+| Value | Where it comes from | Notes |
+| --- | --- | --- |
+| App version (`expo.version`, iOS `CFBundleShortVersionString`, Android `versionName`) | `package.json` | Numbers only (`0.2.0`); iOS rejects `-beta` style suffixes. |
+| Build number (iOS `buildNumber`, Android `versionCode`) | `APP_BUILD_NUMBER` env var, default `1` | Must only ever increase per store upload. Not committed. CI passes its run number; when store builds start, EAS remote versioning (`autoIncrement`) will own it. |
+| Variant | `APP_VARIANT` = `development` (default) / `staging` / `production` | Shown on the About screen with version and build. Never changes the version. |
+
+**How the version changes (pre-1.0):**
+
+| Changes in the release | Bump | Example |
+| --- | --- | --- |
+| At least one **New** | minor | 0.1.0 → 0.2.0 |
+| Only **Improved** / **Fixed** | patch | 0.2.0 → 0.2.1 |
+| Only chores | none | stays 0.2.1 |
+| 1.0.0 or a breaking change | major | owner decision only, never automatic |
+
+The version changes **only when preparing a promotion to `main`**, never in feature PRs. A
+`staging` build therefore carries the version of the *next* release only after release
+preparation; before that it reports the last released version, and is told apart by its build
+number and `staging` variant. Logic and tests: `apps/mobile/config/version.js`.
+
+## Releases
+
+Release notes are generated from merged PR metadata (branch category or label, PR title, linked
+issues) by `.github/scripts/release/cli.js`:
+
+- **What's in a release:** every PR merged into `staging` whose merge commit is on `staging` but
+  not yet on `main` (`git rev-list origin/main..origin/staging`). Unmerged and future work is never
+  included, and PRs already shipped are excluded.
+- **No double counting:** each PR appears once; `CHANGELOG.md` records every released PR number
+  (chores included) in a hidden `<!-- released-prs: … -->` marker, used as a second guard.
+- **Merge strategy:** PRs into `staging` may use any merge method. **Promotions into `main` must use
+  "Create a merge commit"** — squashing a promotion would make the next release re-list old PRs
+  (the marker guard catches this and warns).
+
+Commands (run by Claude Code; the owner never needs to):
+
+```bash
+node .github/scripts/release/cli.js notes --base origin/main --head origin/staging
+node .github/scripts/release/cli.js prepare --base origin/main --head origin/staging
+node .github/scripts/release/cli.js check --base origin/main --head HEAD
+```
+
+- `notes` prints the categorised preview and the suggested bump.
+- `prepare` bumps `apps/mobile/package.json` (and lockfile) once via `npm version` and prepends the
+  entry to `CHANGELOG.md`; done on a `chore/release-x.y.z` branch merged into `staging` right
+  before the promotion PR.
+- `check` fails if the release needs a bump that wasn't made, or `CHANGELOG.md` lacks the entry.
+
+CI (`release-notes.yml`) posts the preview on every PR into `staging`, and runs `check` as a
+**blocking** step on promotion PRs into `main`. Promotion still needs explicit owner approval and
+the release summary in [RELEASING.md](RELEASING.md).
 
 ## Release gates
 
