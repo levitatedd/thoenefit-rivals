@@ -18,7 +18,9 @@ A planned cross-platform fitness competition app for iPhone and Android. Compete
 - [Architecture](docs/ARCHITECTURE.md)
 - [Windows development](docs/DEVELOPMENT.md)
 - [Roadmap](docs/ROADMAP.md)
-- [GitHub Issues backlog](../../issues)
+- [Master backlog — Issue #1](https://github.com/levitatedd/thoenefit-rivals/issues/1)
+- [GitHub Projects board](https://github.com/users/levitatedd/projects/4/views/1)
+- [GitHub Issues](../../issues)
 
 ## Development workflow
 
