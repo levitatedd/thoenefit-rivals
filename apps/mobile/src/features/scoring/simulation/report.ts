@@ -248,6 +248,10 @@ export function renderReport(): string {
     '5. **Validate with real data later:** these simulations assume ±30% daily variation for everyone; real variability differs by person and device. Re-run with real (consented) aggregates when health integrations exist.',
   );
   w();
+  w(
+    'Owner decision on these options, with extra simulations (goals at 80–95% of a usual day): [PRIVACY-SECURITY.md → Easy goals](PRIVACY-SECURITY.md#5-easy-goals-options-for-a-decision) (#10).',
+  );
+  w();
   w('## Limitations');
   w();
   w(

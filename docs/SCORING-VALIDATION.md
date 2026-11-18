@@ -99,6 +99,8 @@ The owner reviewed these findings in #10 (`docs/PRIVACY-SECURITY.md`, decision D
 4. **Ties:** shared places stay, and the leaderboard explains them (done, #3).
 5. **Validate with real data later:** these simulations assume ±30% daily variation for everyone; real variability differs by person and device. Re-run with real (consented) aggregates when health integrations exist.
 
+Owner decision on these options, with extra simulations (goals at 80–95% of a usual day): [PRIVACY-SECURITY.md → Easy goals](PRIVACY-SECURITY.md#5-easy-goals-options-for-a-decision) (#10).
+
 ## Limitations
 
 - Synthetic data: invented fitness profiles and a simple day-to-day variation model; no weekly patterns, illness streaks or device gaps beyond the modelled missed days.
