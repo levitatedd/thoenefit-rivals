@@ -97,7 +97,7 @@ export default function PlayerScreen() {
                   {day.capped ? ' · capped' : ''}
                 </ThemedText>
                 <ThemedText type="smallBold" style={styles.points}>
-                  {day.status === 'future' ? '–' : formatPoints(day.points, true)}
+                  {day.status === 'future' ? '–' : formatPoints(day.points)}
                 </ThemedText>
               </View>
             );

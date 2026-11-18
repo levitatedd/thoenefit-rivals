@@ -50,15 +50,7 @@ export default function CompetitionScreen() {
   );
   const rows = orderedStandings(competition).map((s) => publicById.get(s.participantId)!);
   const ties = findTies(rows);
-  // Whole points are easier to read; show hundredths when different scores round the same.
-  const precise = rows.some((a) =>
-    rows.some(
-      (b) =>
-        a !== b &&
-        a.totalPoints !== b.totalPoints &&
-        Math.round(a.totalPoints) === Math.round(b.totalPoints),
-    ),
-  );
+  const nearTies = findNearTies(rows);
   const final = competition.result.phase === 'final';
 
   return (
@@ -85,7 +77,6 @@ export default function CompetitionScreen() {
               row={row}
               first={index === 0}
               today={world.today}
-              precise={precise}
             />
           ))}
         </Card>
@@ -96,10 +87,17 @@ export default function CompetitionScreen() {
           <Card key={group.rank} style={[styles.note, { backgroundColor: theme.accentSurface }]}>
             <ThemedText type="small">
               {group.names.join(' and ')} share {ordinal(group.rank)} place: exactly{' '}
-              {formatPoints(group.points, true)} points each. Equal points (to the hundredth) share
-              a place and are never broken by a tiebreaker.
+              {formatPoints(group.points)} points each. Equal points (to the hundredth) share a
+              place and are never broken by a tiebreaker.
             </ThemedText>
           </Card>
+        ))}
+
+        {nearTies.map(({ above, below }) => (
+          <ThemedText key={`${above}-${below}`} type="small" themeColor="textSecondary">
+            {above} ranks above {below}: both round to the same whole number of points, but scores
+            are compared to the hundredth of a point.
+          </ThemedText>
         ))}
 
         <ThemedText type="small" themeColor="textSecondary">
@@ -119,13 +117,11 @@ function LeaderboardRow({
   row,
   first,
   today,
-  precise,
 }: {
   competition: DemoCompetition;
   row: PublicStanding;
   first: boolean;
   today: string;
-  precise: boolean;
 }) {
   const theme = useTheme();
   const isYou = row.participantId === YOU;
@@ -148,7 +144,7 @@ function LeaderboardRow({
         })
       }
       accessibilityRole="button"
-      accessibilityLabel={`${placeLabel(competition, standing)}: ${row.displayName}, ${formatPoints(row.totalPoints, true)} points. ${detail}`}
+      accessibilityLabel={`${placeLabel(competition, standing)}: ${row.displayName}, ${formatPoints(row.totalPoints)} points. ${detail}`}
       style={[
         styles.row,
         !first && [listStyles.separator, { borderTopColor: theme.border }],
@@ -164,8 +160,8 @@ function LeaderboardRow({
         </ThemedText>
       </View>
       <DayBars days={row.days} cap={competition.result.rules.dailyCapPoints} today={today} />
-      <ThemedText type="subtitle" style={styles.points}>
-        {formatPoints(row.totalPoints, precise)}
+      <ThemedText type="subtitle" style={styles.points} numberOfLines={1} adjustsFontSizeToFit>
+        {formatPoints(row.totalPoints)}
       </ThemedText>
       <Chevron />
     </Pressable>
@@ -205,6 +201,17 @@ function LegendItem({ label, children }: { label: string; children: React.ReactN
   );
 }
 
+/** Neighbours with different ranks whose totals look the same once rounded. */
+function findNearTies(rows: PublicStanding[]) {
+  return rows.slice(1).flatMap((row, i) => {
+    const prev = rows[i];
+    const looksEqual = formatPoints(prev.totalPoints) === formatPoints(row.totalPoints);
+    return looksEqual && prev.rank !== row.rank
+      ? [{ above: prev.displayName, below: row.displayName }]
+      : [];
+  });
+}
+
 function findTies(rows: PublicStanding[]) {
   const byRank = new Map<number, PublicStanding[]>();
   for (const row of rows) {
@@ -237,7 +244,8 @@ const styles = StyleSheet.create({
   },
   rank: { width: 28, textAlign: 'center' },
   detail: { fontSize: 12, lineHeight: 16 },
-  points: { minWidth: 52, textAlign: 'right', fontVariant: ['tabular-nums'] },
+  // Fixed width so the day bars line up in every row, whatever the score.
+  points: { width: 72, textAlign: 'right', fontVariant: ['tabular-nums'] },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.three },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
   swatch: { width: 8, height: 14, borderRadius: 2 },

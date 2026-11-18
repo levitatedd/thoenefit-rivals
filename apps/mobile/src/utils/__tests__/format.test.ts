@@ -19,20 +19,15 @@ describe('formatShortDate', () => {
 });
 
 describe('formatPoints', () => {
-  it('shows whole points by default', () => {
-    expect(formatPoints(404.51)).toBe('405');
-    expect(formatPoints(1234.4)).toBe('1,234');
-  });
-
   it.each([
     [320, '320'],
-    [1234, '1,234'],
-    [270.1, '270.1'],
-    [201.18, '201.18'],
-    [74.2, '74.2'],
-    [0.05, '0.05'],
-  ])('formats %p as %p', (input, expected) => {
-    expect(formatPoints(input, true)).toBe(expected);
+    [404.51, '405'],
+    [270.1, '270'],
+    [285.5, '286'],
+    [1234.4, '1,234'],
+    [0.05, '0'],
+  ])('rounds %p to %p', (input, expected) => {
+    expect(formatPoints(input)).toBe(expected);
   });
 });
 

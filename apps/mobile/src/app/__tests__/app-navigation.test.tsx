@@ -63,6 +63,10 @@ describe('demo app (real layouts, simulated data, real scoring engine)', () => {
       await screen.findByText(/Maya and You share 1st place: exactly 320 points each/),
     ).toBeOnTheScreen();
     expect(screen.getByText(/These results are final/)).toBeOnTheScreen();
+    // Points are always whole numbers; a rounded near-tie is explained instead.
+    expect(screen.getByText('285')).toBeOnTheScreen();
+    expect(screen.queryByText(/\d\.\d/)).toBeNull();
+    expect(screen.getByText(/Sam ranks above Jordan: both round to the same/)).toBeOnTheScreen();
 
     await userEvent.press(screen.getByRole('button', { name: /^Shared 1st: You, 320 points/ }));
     expect(screen).toHavePathname('/competition/demo-calorie-clash/you');

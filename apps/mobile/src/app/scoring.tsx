@@ -34,7 +34,7 @@ export default function ScoringScreen() {
           </ThemedText>
           <ThemedText type="smallBold" themeColor="accentText" style={styles.formula}>
             {exampleDay
-              ? `${formatNumber(exampleDay.eligibleActivity)} ÷ ${formatNumber(goal)} goal × ${perGoal} = ${formatPoints(exampleDay.points, true)} pts${exampleDay.capped ? ' (capped)' : ''}`
+              ? `${formatNumber(exampleDay.eligibleActivity)} ÷ ${formatNumber(goal)} goal × ${perGoal} = ${formatPoints(exampleDay.points)} pts${exampleDay.capped ? ' (capped)' : ''}`
               : `steps ÷ your goal × ${perGoal} = points`}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
