@@ -39,6 +39,7 @@ ThoeneFit Rivals is an early-stage cross-platform fitness competition app for iP
 <summary><strong>Competition experience — simulated demo</strong></summary>
 
 - **Today:** your activity against your daily goals and today's points.
+- **Fair goals:** competitions use **usual-day goals** (each goal starts at the player's own usual day and can only be raised) or **choose-your-own goals** with neutral labels such as "below usual". New players with limited history pick their own goal and are never penalized.
 - **Competitions and leaderboards:** rank, points, a bar per day (capped and waiting-for-sync days marked), shared places explained, and a day-by-day view per player. Other players see goals and points only; your private goal advice and held or excluded activity are shown to you alone.
 - **How scoring works:** the formula with your own numbers, the daily cap, missing data, the 24-hour finalization window and ties.
 - **Demo controls (demo only):** add activity, jump ahead in time, and **Demo Scoring Settings** (daily point cap, points per goal, each simulated participant's goal) that re-score the demo competitions only. Real competition rules are unchanged; **Reset demo** restores the defaults.

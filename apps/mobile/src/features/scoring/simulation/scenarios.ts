@@ -1,4 +1,4 @@
-import type { CategoryId } from '../types';
+import type { CategoryId, GoalMode } from '../types';
 import type { ProfileId } from './profiles';
 import { monteCarlo, simulateCompetition, standingOf, type PlayerSpec } from './simulate';
 
@@ -57,10 +57,16 @@ export function rawTotalsBaseline(days: number, runs = REPORT_RUNS) {
 }
 
 /** One player sets a goal at `factor` × their typical day; three peers are honest. */
-export function goalAmbition(factor: number, days: number, runs = REPORT_RUNS) {
+export function goalAmbition(
+  factor: number,
+  days: number,
+  runs = REPORT_RUNS,
+  goalMode: GoalMode = 'choose-own',
+) {
   return monteCarlo(runs, (run) => ({
     categoryId: 'step-battle',
     days,
+    goalMode,
     seed: `ambition-${factor}-${days}-${run}`,
     players: [
       { id: 'tested', profile: 'moderate', goalFactor: factor },

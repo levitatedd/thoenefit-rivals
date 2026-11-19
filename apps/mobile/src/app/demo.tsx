@@ -8,10 +8,13 @@ import { fromDateKey } from '@/features/activity';
 import {
   DEMO_PLAYERS,
   SETTING_LIMITS,
+  GOAL_MODE_EXPLANATIONS,
+  GOAL_MODE_LABELS,
   YOU,
   defaultSettings,
+  effectiveGoal,
+  playerUsualDay,
   progressLabel,
-  typicalDay,
   useDemo,
 } from '@/features/demo';
 import { RULES_V1, type CategoryId } from '@/features/scoring';
@@ -171,22 +174,58 @@ export default function DemoControlsScreen() {
               );
             })}
           </View>
+          <View style={styles.modeRow}>
+            <ThemedText type="small" themeColor="textSecondary">
+              Goal mode
+            </ThemedText>
+            <View
+              style={[styles.segment, styles.flex, { backgroundColor: theme.backgroundElement }]}>
+              {(['usual-day', 'choose-own'] as const).map((mode) => {
+                const selected = state.goalModes[goalCategory] === mode;
+                return (
+                  <Pressable
+                    key={mode}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={`${CATEGORY_LABELS[goalCategory]}: ${GOAL_MODE_LABELS[mode]}`}
+                    onPress={() =>
+                      dispatch({ type: 'set-goal-mode', categoryId: goalCategory, mode })
+                    }
+                    style={[styles.segmentButton, selected && { backgroundColor: theme.border }]}>
+                    <ThemedText type={selected ? 'smallBold' : 'small'}>
+                      {mode === 'usual-day' ? 'Usual day' : 'Choose own'}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+          <ThemedText type="small" themeColor="textSecondary">
+            {GOAL_MODE_EXPLANATIONS[state.goalModes[goalCategory]]}
+          </ThemedText>
           <Card style={styles.list}>
             {DEMO_PLAYERS.map((player, index) => {
               const limits = SETTING_LIMITS.goals[goalCategory];
-              const value = settings.goals[goalCategory][player.id];
+              const { goal: value, minimum } = effectiveGoal(state, player, goalCategory);
+              const usual = playerUsualDay(player, goalCategory);
               const unit = goalCategory === 'step-battle' ? 'steps' : 'kcal';
+              const hint = !usual.reliable
+                ? 'limited history · picks own goal'
+                : minimum !== null
+                  ? `usual day ${formatNumber(minimum)} · can only raise`
+                  : `usual day ~${formatNumber(usual.goal ?? 0)} ${unit}`;
               return (
                 <SettingRow
                   key={player.id}
                   label={player.displayName}
-                  hint={`usually ~${formatNumber(typicalDay(player, goalCategory))} ${unit}`}
+                  hint={hint}
                   separated={index > 0}>
                   <Stepper
                     label={`${player.id === YOU ? 'your' : `${player.displayName}'s`} ${CATEGORY_LABELS[goalCategory]} goal`}
                     value={value}
                     display={formatNumber(value)}
                     changed={value !== defaults.goals[goalCategory][player.id]}
+                    decreaseDisabled={minimum !== null && value <= minimum}
                     onDecrease={() =>
                       dispatch({
                         type: 'set-goal',
@@ -278,6 +317,7 @@ const styles = StyleSheet.create({
   },
   flex: { flex: 1 },
   segment: { flexDirection: 'row', borderRadius: 10, padding: 3 },
+  modeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   segmentButton: {
     flex: 1,
     minHeight: 40,

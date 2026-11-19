@@ -95,7 +95,7 @@ The owner reviewed these findings in #10 (decision D4). The options, with extra 
 
 1. **Keep the core formula.** Goal-relative points with a per-day cap level fitness differences, reward consistency, limit outlier days and still allow comebacks.
 2. **Clearer private advice (done, #31):** "near usual" is now 90–110%, and the advice explains that lower goals make points easier and higher goals make them harder.
-3. **Usual-day goals as the default competition mode, with neutral goal labels in casual mode (planned, #32):** goals start at each player’s own usual day and can only be raised; players with limited history choose their own goal and are never penalized.
+3. **Usual-day goals as the default competition mode, with neutral goal labels in casual mode (done in the engine and demo, #32):** goals start at each player’s own usual day and can only be raised; players with limited history choose their own goal and are never penalized. A player who asks for half their usual day is given their usual day instead and wins about a fair share (see `docs/SCORING.md` → Goal modes).
 4. **Ties:** shared places stay, and the leaderboard explains them (done, #3).
 5. **Validate with real data later:** these simulations assume ±30% daily variation for everyone; real variability differs by person and device. Re-run with real (consented) aggregates when health integrations exist.
 

@@ -33,7 +33,7 @@ describe('demo app (real layouts, simulated data, real scoring engine)', () => {
     await renderApp();
 
     expect(await screen.findByText('Simulated data')).toBeOnTheScreen();
-    expect(screen.getByLabelText(/^Steps: [\d,]+ of 8,500 steps goal$/)).toBeOnTheScreen();
+    expect(screen.getByLabelText(/^Steps: [\d,]+ of [\d,]+ steps goal$/)).toBeOnTheScreen();
     expect(screen.getByLabelText(/^Active energy: [\d,]+ of 450 kcal goal$/)).toBeOnTheScreen();
     expect(screen.getByText(/pts today$/)).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: /^Step Battle: .* Day 3 of 7$/ })).toBeOnTheScreen();
@@ -87,7 +87,7 @@ describe('demo app (real layouts, simulated data, real scoring engine)', () => {
   it('explains scoring with your own numbers', async () => {
     await renderApp('/scoring');
     expect(await screen.findByText('At most 200 points a day')).toBeOnTheScreen();
-    expect(screen.getByText(/÷ 8,500 goal × 100 = [\d.,]+ pts/)).toBeOnTheScreen();
+    expect(screen.getByText(/÷ [\d,]+ goal × 100 = [\d.,]+ pts/)).toBeOnTheScreen();
   });
 
   it('changes demo-only scoring settings, labels them, and resets to the standard rules', async () => {
@@ -136,5 +136,30 @@ describe('demo app (real layouts, simulated data, real scoring engine)', () => {
     expect(
       within(screen.getByRole('button', { name: /: Alex,/ })).queryByText(/waiting for sync/),
     ).toBeNull();
+  });
+
+  it('shows goal modes and neutral goal labels on the leaderboard (#32)', async () => {
+    await renderApp('/competition/demo-step-battle');
+    expect(await screen.findByText('Usual-day goals')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /: Maya, .*limited history/ })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /: You, .*usual day/ })).toBeOnTheScreen();
+    expect(
+      screen.getByText(/can only be raised, so nobody can win with an easy goal/),
+    ).toBeOnTheScreen();
+  });
+
+  it('explains your own goal privately (#32)', async () => {
+    await renderApp('/competition/demo-step-battle/you');
+    expect(await screen.findByText(/Your goal is your usual day/)).toBeOnTheScreen();
+  });
+
+  it('demo controls: usual-day goals can only be raised until the mode is switched (#32)', async () => {
+    await renderApp('/demo');
+    const decrease = await screen.findByRole('button', { name: 'Decrease your Step Battle goal' });
+    expect(decrease).toBeDisabled();
+    await userEvent.press(
+      screen.getByRole('radio', { name: 'Step Battle: Choose-your-own goals' }),
+    );
+    expect(screen.getByRole('button', { name: 'Decrease your Step Battle goal' })).toBeEnabled();
   });
 });

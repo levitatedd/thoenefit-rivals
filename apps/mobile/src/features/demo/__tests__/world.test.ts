@@ -1,8 +1,11 @@
 import { RULES_V1, toPublicStandings } from '@/features/scoring';
 
 import {
+  DEMO_PLAYERS,
   buildDemoWorld,
   demoReducer,
+  effectiveGoal,
+  playerUsualDay,
   initialDemoState,
   standingFor,
   type DemoState,
@@ -178,5 +181,72 @@ describe('demo world (simulated data, real scoring engine)', () => {
       { type: 'advance-clock', toMs: NOW + 86_400_000, nowMs: NOW },
     );
     expect(apply(changed, { type: 'reset', anchorDate: '2026-11-18' })).toEqual(base);
+  });
+
+  describe('goal modes (#32)', () => {
+    const you = DEMO_PLAYERS.find((p) => p.id === 'you')!;
+    const labels = (w: DemoWorld, id: 'step-battle' | 'calorie-clash') =>
+      Object.fromEntries(
+        toPublicStandings(comp(w, id).result).map((s) => [s.participantId, s.goalLabel]),
+      );
+
+    it('runs the Step Battle with usual-day goals and the Calorie Clash as casual', () => {
+      const w = world();
+      expect(comp(w, 'step-battle').result.goalMode).toBe('usual-day');
+      expect(comp(w, 'calorie-clash').result.goalMode).toBe('choose-own');
+      const usual = playerUsualDay(you, 'step-battle').goal;
+      expect(standingFor(comp(w, 'step-battle'), 'you').goal.dailyGoal).toBe(usual);
+      expect(labels(w, 'step-battle')).toEqual(
+        expect.objectContaining({ you: 'usual-day', maya: 'limited-history' }),
+      );
+    });
+
+    it('labels Maya (new to tracking) "limited history" in both modes, never below usual', () => {
+      const w = world();
+      expect(labels(w, 'step-battle').maya).toBe('limited-history');
+      expect(labels(w, 'calorie-clash').maya).toBe('limited-history');
+    });
+
+    it('keeps usual-day goals from going lower, but casual mode allows any goal', () => {
+      const lowered = apply(initialDemoState('2026-11-18'), {
+        type: 'set-goal',
+        categoryId: 'step-battle',
+        playerId: 'you',
+        value: 2000,
+      });
+      const usual = playerUsualDay(you, 'step-battle').goal!;
+      expect(effectiveGoal(lowered, you, 'step-battle')).toEqual({ goal: usual, minimum: usual });
+      const casual = apply(lowered, {
+        type: 'set-goal-mode',
+        categoryId: 'step-battle',
+        mode: 'choose-own',
+      });
+      expect(effectiveGoal(casual, you, 'step-battle')).toEqual({ goal: 2000, minimum: null });
+      const w = world(casual);
+      expect(standingFor(comp(w, 'step-battle'), 'you').goal.dailyGoal).toBe(2000);
+      expect(labels(w, 'step-battle').you).toBe('below-usual');
+    });
+
+    it('lets players raise a usual-day goal, shown as "above usual"', () => {
+      const raised = apply(initialDemoState('2026-11-18'), {
+        type: 'set-goal',
+        categoryId: 'step-battle',
+        playerId: 'you',
+        value: 20000,
+      });
+      expect(labels(world(raised), 'step-battle').you).toBe('above-usual');
+    });
+
+    it('reset restores the default goal modes', () => {
+      const changed = apply(initialDemoState('2026-11-18'), {
+        type: 'set-goal-mode',
+        categoryId: 'step-battle',
+        mode: 'choose-own',
+      });
+      expect(apply(changed, { type: 'reset', anchorDate: '2026-11-18' }).goalModes).toEqual({
+        'step-battle': 'usual-day',
+        'calorie-clash': 'choose-own',
+      });
+    });
   });
 });

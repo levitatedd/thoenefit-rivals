@@ -5,6 +5,7 @@ import { Card, DemoSettingsBadge, Pill, SectionTitle } from '@/components/demo-u
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import {
+  GOAL_MODE_LABELS,
   YOU,
   dateRangeLabel,
   orderedStandings,
@@ -79,6 +80,9 @@ function CompetitionCard({ competition }: { competition: DemoCompetition }) {
             <ThemedText type="small" themeColor="textSecondary">
               {competition.categoryId === 'step-battle' ? 'Steps' : 'Active kcal'} ·{' '}
               {dateRangeLabel(competition)}
+            </ThemedText>
+            <ThemedText type="small" themeColor="accentText">
+              {GOAL_MODE_LABELS[competition.result.goalMode]}
             </ThemedText>
           </View>
           <Pill label={progressLabel(competition)} color={final ? 'textSecondary' : 'steps'} />

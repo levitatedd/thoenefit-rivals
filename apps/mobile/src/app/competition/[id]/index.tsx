@@ -13,6 +13,9 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import {
+  GOAL_LABELS,
+  GOAL_MODE_EXPLANATIONS,
+  GOAL_MODE_LABELS,
   YOU,
   dateRangeLabel,
   orderedStandings,
@@ -67,6 +70,9 @@ export default function CompetitionScreen() {
           </ThemedText>
           <Pill label={progressLabel(competition)} color={final ? 'textSecondary' : 'steps'} />
         </View>
+        <ThemedText type="smallBold" themeColor="accentText">
+          {GOAL_MODE_LABELS[competition.result.goalMode]}
+        </ThemedText>
         {world.usesDemoSettings && <DemoSettingsBadge />}
 
         <Card style={styles.list}>
@@ -101,6 +107,10 @@ export default function CompetitionScreen() {
         ))}
 
         <ThemedText type="small" themeColor="textSecondary">
+          {GOAL_MODE_EXPLANATIONS[competition.result.goalMode]}
+        </ThemedText>
+
+        <ThemedText type="small" themeColor="textSecondary">
           Points are relative to each person&apos;s own daily goal, so different fitness levels
           compete fairly. Tap a player for their day-by-day.{' '}
           {final
@@ -128,9 +138,8 @@ function LeaderboardRow({
   const standing = competition.result.standings.find((s) => s.participantId === row.participantId)!;
   const waiting = row.days.filter((d) => d.status === 'pending' && d.date !== today).length;
   const detail = [
-    `Goal ${formatNumber(row.dailyGoal)}`,
+    `Goal ${formatNumber(row.dailyGoal)} · ${GOAL_LABELS[row.goalLabel]}`,
     waiting > 0 ? `${waiting} day${waiting > 1 ? 's' : ''} waiting for sync` : null,
-    row.provisional ? 'provisional' : null,
   ]
     .filter(Boolean)
     .join(' · ');
